@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer utilities {
+  .sticker-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border-width: 1px;
+    cursor: pointer;
+    user-select: none;
+    transition-property: all;
+    transition-duration: 150ms;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .sticker-missing {
+    border-color: rgb(51 65 85);
+    background-color: rgb(30 41 59 / 0.5);
+    color: rgb(100 116 139);
+  }
+  .sticker-obtained {
+    border-color: rgb(59 130 246 / 0.5);
+    background-color: rgb(30 58 138 / 0.3);
+    color: rgb(191 219 254);
+  }
+  .sticker-repeated {
+    border-color: rgb(245 158 11 / 0.5);
+    background-color: rgb(120 53 15 / 0.3);
+    color: rgb(253 230 138);
+  }
+  .progress-bar {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: rgb(51 65 85);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition-property: all;
+    transition-duration: 500ms;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

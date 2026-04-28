@@ -4,7 +4,7 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ percentage, className = '' }: ProgressBarProps) {
-  const color = percentage === 100 ? 'bg-green-500' : percentage >= 50 ? 'bg-blue-500' : 'bg-blue-600'
+  const color = percentage === 100 ? 'bg-(--accent)' : percentage >= 50 ? 'bg-(--accent)/80' : 'bg-(--primary)'
   return (
     <div className={`progress-bar ${className}`}>
       <div

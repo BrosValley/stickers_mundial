@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -39,14 +40,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-(--bg) flex items-center justify-center px-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-400 mb-2">Album Checklist</h1>
-          <p className="text-slate-400">Registra tu colección de estampas</p>
+          <h1 className="text-3xl font-bold text-(--accent) mb-2 uppercase tracking-widest">Album Checklist</h1>
+          <p className="text-(--muted)">Registra tu colección de estampas</p>
         </div>
-        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8">
-          <h2 className="text-xl font-semibold mb-6 text-center">
+        <div className="bg-(--surface) rounded-2xl border border-(--border) p-8">
+          <h2 className="text-xl font-semibold mb-6 text-center uppercase tracking-wide text-(--text)">
             {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </h2>
 
@@ -58,7 +62,7 @@ export default function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               required
               suppressHydrationWarning
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-(--bg) border border-(--border) rounded-lg px-4 py-3 text-(--text) placeholder-(--muted) focus:outline-none focus:border-(--accent) transition-colors"
             />
             <input
               type="password"
@@ -68,11 +72,11 @@ export default function LoginPage() {
               required
               minLength={6}
               suppressHydrationWarning
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-(--bg) border border-(--border) rounded-lg px-4 py-3 text-(--text) placeholder-(--muted) focus:outline-none focus:border-(--accent) transition-colors"
             />
 
             {message && (
-              <p className={`text-sm text-center ${message.type === 'error' ? 'text-red-400' : 'text-green-400'}`}>
+              <p className={`text-sm text-center ${message.type === 'error' ? 'text-(--primary)' : 'text-(--accent)'}`}>
                 {message.text}
               </p>
             )}
@@ -80,17 +84,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
+              className="w-full bg-(--primary) hover:bg-(--primary-hover) disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors uppercase tracking-wide"
             >
               {loading ? 'Cargando...' : mode === 'login' ? 'Entrar' : 'Registrarme'}
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-5">
+          <p className="text-center text-sm text-(--muted) mt-5">
             {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
             <button
               onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setMessage(null) }}
-              className="text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-(--accent) hover:text-(--accent-hover) transition-colors font-medium"
             >
               {mode === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
             </button>

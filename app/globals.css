@@ -1,5 +1,65 @@
 @import "tailwindcss";
 
+/* ── Light theme (default) ─────────────────────────────── */
+:root {
+  --bg:             #f0f4ff;
+  --surface:        #ffffff;
+  --surface-hover:  #eef2ff;
+  --border:         #cdd5f0;
+  --border-hover:   #a0aee0;
+  --text:           #0d1440;
+  --muted:          #6670a0;
+  --primary:        #d41830;
+  --primary-hover:  #e8253d;
+  --accent:         #009e90;
+  --accent-hover:   #00b5a6;
+  --amber:          #c47a00;
+
+  --sticker-missing-bg:      rgba(208 216 240 / 0.35);
+  --sticker-missing-border:  #cdd5f0;
+  --sticker-missing-text:    #6670a0;
+
+  --sticker-obtained-bg:     rgba(0 158 144 / 0.12);
+  --sticker-obtained-border: rgba(0 196 180 / 0.45);
+  --sticker-obtained-text:   #007a72;
+
+  --sticker-repeated-bg:     rgba(212 24 48 / 0.1);
+  --sticker-repeated-border: rgba(212 24 48 / 0.4);
+  --sticker-repeated-text:   #a01020;
+
+  --progress-track:          #cdd5f0;
+}
+
+/* ── Dark theme ────────────────────────────────────────── */
+.dark {
+  --bg:             #040818;
+  --surface:        #0a0f2e;
+  --surface-hover:  #0d1438;
+  --border:         #1e2550;
+  --border-hover:   #2e3870;
+  --text:           #e8ecff;
+  --muted:          #8891bb;
+  --primary:        #e8253d;
+  --primary-hover:  #f03550;
+  --accent:         #00c4b4;
+  --accent-hover:   #00e0cc;
+  --amber:          #f5a623;
+
+  --sticker-missing-bg:      rgba(10 15 46 / 0.7);
+  --sticker-missing-border:  #1e2550;
+  --sticker-missing-text:    #8891bb;
+
+  --sticker-obtained-bg:     rgba(0 80 74 / 0.25);
+  --sticker-obtained-border: rgba(0 196 180 / 0.4);
+  --sticker-obtained-text:   #00e0cc;
+
+  --sticker-repeated-bg:     rgba(100 10 20 / 0.25);
+  --sticker-repeated-border: rgba(232 37 61 / 0.4);
+  --sticker-repeated-text:   #ff9aaa;
+
+  --progress-track:          #1e2550;
+}
+
 @layer utilities {
   .sticker-card {
     position: relative;
@@ -15,24 +75,24 @@
     transition-duration: 150ms;
   }
   .sticker-missing {
-    border-color: rgb(51 65 85);
-    background-color: rgb(30 41 59 / 0.5);
-    color: rgb(100 116 139);
+    border-color: var(--sticker-missing-border);
+    background-color: var(--sticker-missing-bg);
+    color: var(--sticker-missing-text);
   }
   .sticker-obtained {
-    border-color: rgb(59 130 246 / 0.5);
-    background-color: rgb(30 58 138 / 0.3);
-    color: rgb(191 219 254);
+    border-color: var(--sticker-obtained-border);
+    background-color: var(--sticker-obtained-bg);
+    color: var(--sticker-obtained-text);
   }
   .sticker-repeated {
-    border-color: rgb(245 158 11 / 0.5);
-    background-color: rgb(120 53 15 / 0.3);
-    color: rgb(253 230 138);
+    border-color: var(--sticker-repeated-border);
+    background-color: var(--sticker-repeated-bg);
+    color: var(--sticker-repeated-text);
   }
   .progress-bar {
     height: 0.5rem;
     border-radius: 9999px;
-    background-color: rgb(51 65 85);
+    background-color: var(--progress-track);
     overflow: hidden;
   }
   .progress-fill {

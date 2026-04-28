@@ -15,10 +15,10 @@ export function GroupNav({ groups, selectedGroupId, onChange }: GroupNavProps) {
     <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
       <button
         onClick={() => onChange(null)}
-        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+        className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-colors ${
           selectedGroupId === null
-            ? 'bg-blue-600 text-white font-medium'
-            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+            ? 'bg-(--accent) text-(--bg) border border-(--accent)'
+            : 'bg-(--surface) text-(--muted) hover:bg-(--surface-hover) border border-(--border) hover:text-(--text)'
         }`}
       >
         Todos
@@ -27,10 +27,10 @@ export function GroupNav({ groups, selectedGroupId, onChange }: GroupNavProps) {
         <button
           key={g.id}
           onClick={() => onChange(g.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-colors ${
             selectedGroupId === g.id
-              ? 'bg-blue-600 text-white font-medium'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+              ? 'bg-(--accent) text-(--bg) border border-(--accent)'
+              : 'bg-(--surface) text-(--muted) hover:bg-(--surface-hover) border border-(--border) hover:text-(--text)'
           }`}
         >
           {g.name}

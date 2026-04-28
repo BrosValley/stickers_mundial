@@ -33,24 +33,24 @@ export function CountryCard({
   if (visibleStickers.length === 0 && filter !== 'all') return null
 
   return (
-    <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-800/50">
+    <div className="border border-(--border) rounded-xl overflow-hidden bg-(--surface)">
       <button
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-700/30 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 hover:bg-(--surface-hover) transition-colors text-left"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <span className="font-semibold text-slate-100 truncate">{country.name}</span>
-          <span className="text-xs text-slate-400 font-mono">{country.code}</span>
+          <span className="font-semibold text-(--text) truncate uppercase tracking-wide text-sm">{country.name}</span>
+          <span className="text-xs text-(--muted) font-mono">{country.code}</span>
           {progress.isComplete && (
-            <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded">
+            <span className="text-xs bg-(--accent)/15 text-(--accent) border border-(--accent)/30 px-2 py-0.5 rounded font-bold">
               ✓ Completo
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="text-sm text-slate-400">{progress.obtained}/{progress.total}</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-sm text-(--muted)">{progress.obtained}/{progress.total}</span>
           <svg
-            className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-(--muted) transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -65,9 +65,9 @@ export function CountryCard({
       {isExpanded && (
         <div className="px-4 pb-4">
           {visibleStickers.length === 0 ? (
-            <p className="text-sm text-slate-500 py-4 text-center">No hay estampas con este filtro.</p>
+            <p className="text-sm text-(--muted) py-4 text-center">No hay estampas con este filtro.</p>
           ) : (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 mt-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4 mt-3">
               {visibleStickers.map(sticker => (
                 <StickerCard
                   key={sticker.id}

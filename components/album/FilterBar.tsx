@@ -21,10 +21,10 @@ export function FilterBar({ activeFilter, onChange }: FilterBarProps) {
         <button
           key={f.value}
           onClick={() => onChange(f.value)}
-          className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-colors ${
             activeFilter === f.value
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+              ? 'bg-(--primary) text-white border border-(--primary)'
+              : 'bg-(--surface) text-(--muted) hover:bg-(--surface-hover) border border-(--border) hover:text-(--text)'
           }`}
         >
           {f.label}

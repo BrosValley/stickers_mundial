@@ -4,10 +4,10 @@ import { ShareQrPanel } from '@/components/share/ShareQrPanel'
 import { createClient } from '@/lib/supabase/server'
 import { calcCollectionProgress } from '@/lib/progress'
 import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
-import { calcMatchResult, getUserStickersForMatch } from '@/lib/share'
+import { calcMatchResult } from '@/lib/share'
 import { MatchClient } from './MatchClient'
 import type { Metadata } from 'next'
-import type { ShareLink, Collection } from '@/types/album'
+import type { ShareLink, Collection, UserSticker } from '@/types/album'
 import Link from 'next/link'
 
 interface PageProps {
@@ -48,7 +48,7 @@ async function getSharedAlbum(token: string) {
   const stickersWithQuantity = mergeStickersWithQuantity(stickers, userStickers)
   const progress = calcCollectionProgress(stickersWithQuantity, countries)
 
-  return { shareLink, collection, countries, stickersWithQuantity, progress }
+  return { shareLink, collection, countries, stickers, stickersWithQuantity, progress }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -101,7 +101,7 @@ export default async function SharePage({ params }: PageProps) {
     )
   }
 
-  const { shareLink, collection, countries, stickersWithQuantity, progress } = shared
+  const { shareLink, collection, countries, stickers, stickersWithQuantity, progress } = shared
   const shareUrl = `${siteUrl}/share/${token}`
   const countryMap = new Map(countries.map(country => [country.id, country]))
   const grouped = new Map<string, typeof stickersWithQuantity>()
@@ -131,10 +131,16 @@ export default async function SharePage({ params }: PageProps) {
   }
 
   const showMatch = user && user.id !== shareLink.user_id
-  const visitorStickers = showMatch
-    ? await getUserStickersForMatch(user.id, collection.id)
-    : []
-  const matchResult = showMatch ? calcMatchResult(stickersWithQuantity, visitorStickers) : null
+  let matchResult = null
+  if (showMatch) {
+    const visitorUserStickersResult = await supabase
+      .from('user_stickers')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('collection_id', collection.id)
+    const visitorStickers = mergeStickersWithQuantity(stickers, (visitorUserStickersResult.data ?? []) as UserSticker[])
+    matchResult = calcMatchResult(stickersWithQuantity, visitorStickers)
+  }
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
@@ -179,14 +185,25 @@ export default async function SharePage({ params }: PageProps) {
 
           <div className="space-y-4">
             <ShareQrPanel shareUrl={shareUrl} />
-            <div className="rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-(--text)">Crea tu propio álbum</h2>
-              <p className="mt-2 text-sm leading-6 text-(--muted)">Guarda una copia, empieza tu checklist y reta a tus amigos a completar el álbum.</p>
-              <div className="mt-4 flex flex-col gap-2">
-                <Link href="/login" className="rounded-2xl bg-(--primary) px-4 py-3 text-center text-sm font-semibold text-white">Empieza tu checklist</Link>
-                <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Ver más álbumes</Link>
+            {showMatch ? (
+              <div className="rounded-3xl border border-(--accent)/30 bg-(--accent)/8 p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-(--text)">¡Puedes intercambiar!</h2>
+                <p className="mt-2 text-sm leading-6 text-(--muted)">Más abajo verás qué stickers pueden intercambiarse entre tu colección y la de este usuario.</p>
+                <div className="mt-4 flex flex-col gap-2">
+                  <a href="#intercambios" className="rounded-2xl bg-(--accent) px-4 py-3 text-center text-sm font-semibold text-white">Ver intercambios posibles</a>
+                  <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Mi colección</Link>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-(--text)">Crea tu propio álbum</h2>
+                <p className="mt-2 text-sm leading-6 text-(--muted)">Guarda una copia, empieza tu checklist y reta a tus amigos a completar el álbum.</p>
+                <div className="mt-4 flex flex-col gap-2">
+                  <Link href="/login" className="rounded-2xl bg-(--primary) px-4 py-3 text-center text-sm font-semibold text-white">Empieza tu checklist</Link>
+                  <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Ver más álbumes</Link>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -228,7 +245,7 @@ export default async function SharePage({ params }: PageProps) {
         </section>
 
         {matchResult && (
-          <section aria-label="Comparación de intercambios">
+          <section id="intercambios" aria-label="Comparación de intercambios">
             <MatchClient matchResult={matchResult} ownerName="Este coleccionista" countries={countries} embedded />
           </section>
         )}

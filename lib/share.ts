@@ -1,10 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
+import { getStickers, mergeStickersWithQuantity } from '@/lib/collections'
 import type { ShareLink, StickerWithQuantity, MatchResult } from '@/types/album'
-import type { Database } from '@/types/database'
-
-type ShareLinkInsert = Database['public']['Tables']['share_links']['Insert']
-type StickerRow = Database['public']['Tables']['stickers']['Row']
-type UserStickerRow = Database['public']['Tables']['user_stickers']['Row']
 
 function generateToken(): string {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
@@ -49,23 +45,15 @@ export async function getShareLinkByToken(token: string): Promise<ShareLink | nu
 
 export async function getUserStickersForMatch(userId: string, collectionId: string): Promise<StickerWithQuantity[]> {
   const supabase = createClient()
-  const { data: stickers } = await supabase
-    .from('stickers')
-    .select('*')
-    .eq('collection_id', collectionId)
-    .order('sort_order', { ascending: true })
-
-  const { data: userStickers } = await supabase
-    .from('user_stickers')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('collection_id', collectionId)
-
-  if (!stickers) return []
-  const typedStickers = stickers as StickerRow[]
-  const typedUserStickers = (userStickers ?? []) as UserStickerRow[]
-  const quantityMap = new Map(typedUserStickers.map(us => [us.sticker_id, us.quantity]))
-  return typedStickers.map(s => ({ ...s, quantity: quantityMap.get(s.id) ?? 0 }))
+  const [stickers, userStickersResult] = await Promise.all([
+    getStickers(collectionId),
+    supabase
+      .from('user_stickers')
+      .select('sticker_id, quantity')
+      .eq('user_id', userId)
+      .eq('collection_id', collectionId),
+  ])
+  return mergeStickersWithQuantity(stickers, userStickersResult.data ?? [])
 }
 
 export function calcMatchResult(

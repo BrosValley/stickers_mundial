@@ -1,15 +1,25 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
+
+function subscribe() {
+  return () => {}
+}
+
+function getClientSnapshot() {
+  return true
+}
+
+function getServerSnapshot() {
+  return false
+}
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot)
 
-  useEffect(() => setMounted(true), [])
-
-  if (!mounted) return <div className="w-8 h-8" />
+  if (!mounted) return <div className="size-10" />
 
   const isDark = theme === 'dark'
 
@@ -17,7 +27,7 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label="Cambiar tema"
-      className="w-8 h-8 flex items-center justify-center rounded-lg border border-(--border) bg-(--surface) hover:bg-(--surface-hover) transition-colors text-(--muted) hover:text-(--text)"
+      className="flex size-10 items-center justify-center rounded-xl border border-(--border) bg-(--surface) text-(--muted) transition hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
     >
       {isDark ? (
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

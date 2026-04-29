@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AlbumClient } from './AlbumClient'
-import { getCollectionBySlug, getGroups, getCountries, getSections, getStickers, getUserStickers, mergeStickersWithQuantity } from '@/lib/collections'
+import { getCollectionBySlug, getGroups, getCountries, getSections, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
 
 interface PageProps {
   params: Promise<{ collectionSlug: string }>
@@ -15,7 +15,8 @@ export default async function AlbumPage({ params }: PageProps) {
   if (!user) redirect('/login')
 
   // Garantiza que el perfil existe (puede no haberse creado si el trigger falló)
-  await supabase.from('profiles').upsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('profiles').upsert(
     {
       id: user.id,
       email: user.email ?? null,

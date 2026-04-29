@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { ShareLink, StickerWithQuantity, MatchResult } from '@/types/album'
 import type { Database } from '@/types/database'
 
-type ShareLinkInsert = Database['public']['Tables']['share_links']['Insert']
 type StickerRow = Database['public']['Tables']['stickers']['Row']
 type UserStickerRow = Database['public']['Tables']['user_stickers']['Row']
 

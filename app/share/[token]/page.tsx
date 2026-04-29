@@ -4,10 +4,10 @@ import { ShareQrPanel } from '@/components/share/ShareQrPanel'
 import { createClient } from '@/lib/supabase/server'
 import { calcCollectionProgress } from '@/lib/progress'
 import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
-import { calcMatchResult } from '@/lib/share'
+import { calcMatchResult, getUserStickersForMatch } from '@/lib/share'
 import { MatchClient } from './MatchClient'
 import type { Metadata } from 'next'
-import type { ShareLink, Collection, UserSticker } from '@/types/album'
+import type { ShareLink, Collection } from '@/types/album'
 import Link from 'next/link'
 
 interface PageProps {
@@ -131,11 +131,8 @@ export default async function SharePage({ params }: PageProps) {
   }
 
   const showMatch = user && user.id !== shareLink.user_id
-  const visitorStickersResult = showMatch
-    ? await supabase.from('user_stickers').select('*').eq('user_id', user.id).eq('collection_id', collection.id)
-    : null
   const visitorStickers = showMatch
-    ? mergeStickersWithQuantity(stickersWithQuantity, (visitorStickersResult?.data ?? []) as UserSticker[])
+    ? await getUserStickersForMatch(user.id, collection.id)
     : []
   const matchResult = showMatch ? calcMatchResult(stickersWithQuantity, visitorStickers) : null
 

@@ -190,7 +190,7 @@ export default async function SharePage({ params }: PageProps) {
                 <h2 className="text-lg font-bold text-(--text)">¡Puedes intercambiar!</h2>
                 <p className="mt-2 text-sm leading-6 text-(--muted)">Más abajo verás qué stickers pueden intercambiarse entre tu colección y la de este usuario.</p>
                 <div className="mt-4 flex flex-col gap-2">
-                  <a href="#intercambios" className="rounded-2xl bg-(--accent) px-4 py-3 text-center text-sm font-semibold text-white">Ver intercambios posibles</a>
+                  <Link href="/" className="rounded-2xl bg-(--accent) px-4 py-3 text-center text-sm font-semibold text-white">Ver mi colección</Link>
                   <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Mi colección</Link>
                 </div>
               </div>
@@ -208,6 +208,12 @@ export default async function SharePage({ params }: PageProps) {
         </section>
 
         <AdSlot title="Patrocinio contextual" description="Bloque preparado para marcas de coleccionables, sin interrumpir lectura ni navegación." />
+
+        {matchResult && (
+          <section id="intercambios" aria-label="Comparación de intercambios">
+            <MatchClient matchResult={matchResult} ownerName="Este coleccionista" countries={countries} embedded />
+          </section>
+        )}
 
         <section>
           <h2 className="text-2xl font-bold tracking-tight text-(--text)">Checklist visible</h2>
@@ -243,12 +249,6 @@ export default async function SharePage({ params }: PageProps) {
             })}
           </div>
         </section>
-
-        {matchResult && (
-          <section id="intercambios" aria-label="Comparación de intercambios">
-            <MatchClient matchResult={matchResult} ownerName="Este coleccionista" countries={countries} embedded />
-          </section>
-        )}
 
         <AdSlot variant="footer" title="Premium sin anuncios" description="Estructura lista para futuros planes con álbumes privados, estadísticas avanzadas y exportación de progreso." />
       </main>

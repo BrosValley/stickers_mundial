@@ -8,9 +8,10 @@ interface MatchClientProps {
   matchResult: MatchResult
   ownerName: string
   countries: Country[]
+  embedded?: boolean
 }
 
-export function MatchClient({ matchResult, ownerName, countries }: MatchClientProps) {
+export function MatchClient({ matchResult, ownerName, countries, embedded = false }: MatchClientProps) {
   const { ownerCanGive, visitorCanGive, possibleExchanges } = matchResult
 
   const countryMap = useMemo(() => new Map(countries.map(c => [c.id, c])), [countries])
@@ -29,9 +30,10 @@ export function MatchClient({ matchResult, ownerName, countries }: MatchClientPr
   const ownerGrouped = useMemo(() => groupByCountry(ownerCanGive), [ownerCanGive])
   const visitorGrouped = useMemo(() => groupByCountry(visitorCanGive), [visitorCanGive])
 
-  return (
-    <div className="min-h-screen bg-slate-900">
-      <nav className="border-b border-slate-800 px-4 py-3 flex items-center gap-3">
+  const content = (
+    <>
+      {!embedded && (
+      <nav className="border-b border-(--border) px-4 py-3 flex items-center gap-3">
         <Link href="/" className="text-slate-400 hover:text-slate-200 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -39,8 +41,10 @@ export function MatchClient({ matchResult, ownerName, countries }: MatchClientPr
         </Link>
         <h1 className="text-lg font-semibold">Intercambio con {ownerName}</h1>
       </nav>
+      )}
 
-      <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
+      <main className={`${embedded ? '' : 'px-4 py-6 max-w-4xl mx-auto'} space-y-6`}>
+        {embedded && <h2 className="text-2xl font-bold tracking-tight text-(--text)">Posibles intercambios</h2>}
         <div className="grid grid-cols-3 gap-4">
           <SummaryCard label={`${ownerName} te puede dar`} value={ownerCanGive.length} color="text-green-400" />
           <SummaryCard label="Posibles intercambios" value={possibleExchanges} color="text-blue-400" />
@@ -63,15 +67,23 @@ export function MatchClient({ matchResult, ownerName, countries }: MatchClientPr
           badgeColor="bg-amber-900/50 text-amber-300 border-amber-500/30"
         />
       </main>
+    </>
+  )
+
+  if (embedded) return content
+
+  return (
+    <div className="min-h-screen bg-(--bg) text-(--text)">
+      {content}
     </div>
   )
 }
 
 function SummaryCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 text-center">
+    <div className="rounded-2xl border border-(--border) bg-(--surface) p-4 text-center">
       <div className={`text-2xl font-bold ${color}`}>{value}</div>
-      <div className="text-xs text-slate-400 mt-1">{label}</div>
+      <div className="text-xs text-(--muted) mt-1">{label}</div>
     </div>
   )
 }
@@ -87,22 +99,22 @@ function StickerSection({
 }) {
   if (grouped.size === 0) {
     return (
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
+      <div className="rounded-3xl border border-(--border) bg-(--surface) p-5">
         <h3 className="font-semibold mb-3">{title}</h3>
-        <p className="text-slate-500 text-sm">{emptyMessage}</p>
+        <p className="text-(--muted) text-sm">{emptyMessage}</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
+    <div className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <h3 className="font-semibold mb-4">{title}</h3>
       <div className="space-y-4">
         {Array.from(grouped.entries()).map(([countryId, stickers]) => {
           const country = countryMap.get(countryId)
           return (
             <div key={countryId}>
-              <div className="text-sm font-medium text-slate-300 mb-2">
+              <div className="text-sm font-medium text-(--text) mb-2">
                 {country?.name ?? 'Sección especial'}
               </div>
               <div className="flex flex-wrap gap-2">

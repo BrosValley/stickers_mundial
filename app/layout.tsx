@@ -8,8 +8,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Album Checklist',
-  description: 'Registra tu colección de estampas',
+  title: 'stickers_checklist | Álbumes digitales y progreso de stickers',
+  description: 'Crea, completa y comparte álbumes digitales de coleccionables.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -179,12 +179,12 @@ export default async function SharePage({ params }: PageProps) {
                 </span>
               )}
             </div>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-(--text) sm:text-5xl">{collection.name}</h1>
             {ownerNickname && !user && (
-              <p className="mt-2 text-sm text-(--muted)">
-                Álbum de <span className="font-semibold text-(--text)">{ownerLabel}</span>
+              <p className="mt-4 text-lg font-semibold text-(--text)">
+                Álbum de <span className="text-(--accent)">{ownerLabel}</span>
               </p>
             )}
+            <h1 className="mt-1 text-4xl font-bold tracking-tight text-(--text) sm:text-5xl">{collection.name}</h1>
             {collection.description && <p className="mt-4 max-w-2xl text-base leading-7 text-(--muted)">{collection.description}</p>}
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-sm text-(--muted)">

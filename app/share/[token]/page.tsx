@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { calcCollectionProgress } from '@/lib/progress'
 import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
 import { calcMatchResult } from '@/lib/share'
+import { getOwnerNickname } from '@/lib/profile.server'
 import { MatchClient } from './MatchClient'
 import type { Metadata } from 'next'
 import type { ShareLink, Collection, UserSticker } from '@/types/album'
@@ -38,23 +39,27 @@ async function getSharedAlbum(token: string) {
   const collection = collectionRaw as Collection | null
   if (!collection) return null
 
-  const [countries, stickers, userStickersResult] = await Promise.all([
+  const [countries, stickers, userStickersResult, ownerNickname] = await Promise.all([
     getCountries(collection.id),
     getStickers(collection.id),
     supabase.from('user_stickers').select('*').eq('user_id', shareLink.user_id).eq('collection_id', collection.id),
+    getOwnerNickname(shareLink.user_id),
   ])
 
   const userStickers = (userStickersResult.data ?? []) as UserSticker[]
   const stickersWithQuantity = mergeStickersWithQuantity(stickers, userStickers)
   const progress = calcCollectionProgress(stickersWithQuantity, countries)
 
-  return { shareLink, collection, countries, stickers, stickersWithQuantity, progress }
+  return { shareLink, collection, countries, stickers, stickersWithQuantity, progress, ownerNickname }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { token } = await params
   const shared = await getSharedAlbum(token)
-  const title = shared ? `${shared.collection.name} compartido | stickers_checklist` : 'Álbum compartido | stickers_checklist'
+  const ownerLabel = shared?.ownerNickname ? `@${shared.ownerNickname}` : null
+  const title = shared
+    ? `${shared.collection.name}${ownerLabel ? ` de ${ownerLabel}` : ''} | stickers_checklist`
+    : 'Álbum compartido | stickers_checklist'
   const description = shared
     ? `Consulta el progreso público del álbum ${shared.collection.name}: ${shared.progress.percentage}% completado en modo solo lectura.`
     : 'Consulta un álbum digital compartido en stickers_checklist.'
@@ -101,7 +106,8 @@ export default async function SharePage({ params }: PageProps) {
     )
   }
 
-  const { shareLink, collection, countries, stickers, stickersWithQuantity, progress } = shared
+  const { shareLink, collection, countries, stickers, stickersWithQuantity, progress, ownerNickname } = shared
+  const ownerLabel = ownerNickname ? `@${ownerNickname}` : 'Este coleccionista'
   const shareUrl = `${siteUrl}/share/${token}`
   const countryMap = new Map(countries.map(country => [country.id, country]))
   const grouped = new Map<string, typeof stickersWithQuantity>()
@@ -163,10 +169,22 @@ export default async function SharePage({ params }: PageProps) {
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:py-12">
         <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
           <div className="rounded-3xl border border-(--border) bg-(--surface) p-6 shadow-xl shadow-black/5">
-            <span className="inline-flex rounded-full border border-(--accent)/30 bg-(--accent)/10 px-3 py-1 text-xs font-semibold text-(--accent)">
-              Álbum público · solo lectura
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex rounded-full border border-(--accent)/30 bg-(--accent)/10 px-3 py-1 text-xs font-semibold text-(--accent)">
+                Álbum público · solo lectura
+              </span>
+              {ownerNickname && (
+                <span className="inline-flex rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-mono text-(--muted)">
+                  {ownerLabel}
+                </span>
+              )}
+            </div>
             <h1 className="mt-4 text-4xl font-bold tracking-tight text-(--text) sm:text-5xl">{collection.name}</h1>
+            {ownerNickname && !user && (
+              <p className="mt-2 text-sm text-(--muted)">
+                Álbum de <span className="font-semibold text-(--text)">{ownerLabel}</span>
+              </p>
+            )}
             {collection.description && <p className="mt-4 max-w-2xl text-base leading-7 text-(--muted)">{collection.description}</p>}
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-sm text-(--muted)">
@@ -188,7 +206,11 @@ export default async function SharePage({ params }: PageProps) {
             {showMatch ? (
               <div className="rounded-3xl border border-(--accent)/30 bg-(--accent)/8 p-5 shadow-sm">
                 <h2 className="text-lg font-bold text-(--text)">¡Puedes intercambiar!</h2>
-                <p className="mt-2 text-sm leading-6 text-(--muted)">Más abajo verás qué stickers pueden intercambiarse entre tu colección y la de este usuario.</p>
+                <p className="mt-2 text-sm leading-6 text-(--muted)">
+                  {ownerNickname
+                    ? `${ownerLabel} te puede dar algunas estampas. Más abajo verás los posibles intercambios.`
+                    : 'Más abajo verás qué stickers pueden intercambiarse entre tu colección y la de este usuario.'}
+                </p>
                 <div className="mt-4 flex flex-col gap-2">
                   <Link href="/" className="rounded-2xl bg-(--accent) px-4 py-3 text-center text-sm font-semibold text-white">Ver mi colección</Link>
                   <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Mi colección</Link>
@@ -211,7 +233,7 @@ export default async function SharePage({ params }: PageProps) {
 
         {matchResult && (
           <section id="intercambios" aria-label="Comparación de intercambios">
-            <MatchClient matchResult={matchResult} ownerName="Este coleccionista" countries={countries} embedded />
+            <MatchClient matchResult={matchResult} ownerName={ownerLabel} countries={countries} embedded />
           </section>
         )}
 

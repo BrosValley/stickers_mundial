@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { useConfetti } from '@/hooks/useConfetti'
 import { StatsBar } from '@/components/progress/StatsBar'
 import { FilterBar } from '@/components/album/FilterBar'
 import { GroupNav } from '@/components/album/GroupNav'
 import { CountryCard } from '@/components/album/CountryCard'
+import { SectionCard } from '@/components/album/SectionCard'
+import { ExtraStickerSection } from '@/components/album/ExtraStickerSection'
 import { ShareModal } from '@/components/share/ShareModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -32,6 +35,8 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isLoadingShare, setIsLoadingShare] = useState(false)
+
+  const fireConfetti = useConfetti()
 
   const progress = useMemo(() => calcCollectionProgress(stickers, countries), [stickers, countries])
 
@@ -64,11 +69,49 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     return map
   }, [stickers])
 
+  const sectionStickersMap = useMemo(() => {
+    const map = new Map<string, StickerWithQuantity[]>()
+    for (const s of stickers) {
+      if (s.section_id && !s.country_id) {
+        const arr = map.get(s.section_id) ?? []
+        arr.push(s)
+        map.set(s.section_id, arr)
+      }
+    }
+    return map
+  }, [stickers])
+
+  const firstSections = useMemo(() => sections.filter(s => s.sort_order < 1), [sections])
+  const lastSections = useMemo(() => sections.filter(s => s.sort_order > 12), [sections])
+
   const updateQuantity = useCallback(async (stickerId: string, delta: number) => {
     const current = stickers.find(s => s.id === stickerId)
     if (!current) return
     const newQty = Math.min(MAX_QUANTITY, Math.max(MIN_QUANTITY, current.quantity + delta))
     if (newQty === current.quantity) return
+
+    if (current.country_id) {
+      const countryStickers = stickers.filter(s => s.country_id === current.country_id)
+      const wasComplete = countryStickers.every(s => s.quantity >= 1)
+      const willBeComplete = countryStickers.every(s => s.id === stickerId ? newQty >= 1 : s.quantity >= 1)
+      if (!wasComplete && willBeComplete) fireConfetti()
+    } else if (current.section_id) {
+      const codeParts = current.code.split('-')
+      if (codeParts[0] === 'ES' && codeParts.length === 3) {
+        // Extra sticker: confetti al completar las 4 raridades de un jugador
+        const playerKey = codeParts.slice(0, 2).join('-')
+        const playerStickers = stickers.filter(s => s.code.startsWith(playerKey + '-'))
+        const wasComplete = playerStickers.every(s => s.quantity >= 1)
+        const willBeComplete = playerStickers.every(s => s.id === stickerId ? newQty >= 1 : s.quantity >= 1)
+        if (!wasComplete && willBeComplete) fireConfetti()
+      } else {
+        // Sección normal (FWC, Coca Cola): confetti al completar toda la sección
+        const sectionStickers = stickers.filter(s => s.section_id === current.section_id && !s.country_id)
+        const wasComplete = sectionStickers.every(s => s.quantity >= 1)
+        const willBeComplete = sectionStickers.every(s => s.id === stickerId ? newQty >= 1 : s.quantity >= 1)
+        if (!wasComplete && willBeComplete) fireConfetti()
+      }
+    }
 
     setStickers(prev => prev.map(s => s.id === stickerId ? { ...s, quantity: newQty } : s))
     setUpdatingIds(prev => new Set(prev).add(stickerId))
@@ -80,7 +123,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     } finally {
       setUpdatingIds(prev => { const next = new Set(prev); next.delete(stickerId); return next })
     }
-  }, [stickers, user.id, collection.id])
+  }, [stickers, user.id, collection.id, fireConfetti])
 
   const handleShare = useCallback(async () => {
     setIsLoadingShare(true)
@@ -172,6 +215,19 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
         </section>
 
         <section className="space-y-4">
+          {firstSections.map(section => (
+            <SectionCard
+              key={section.id}
+              section={section}
+              stickers={sectionStickersMap.get(section.id) ?? []}
+              filter={filter}
+              searchQuery={searchQuery}
+              onIncrement={id => updateQuantity(id, 1)}
+              onDecrement={id => updateQuantity(id, -1)}
+              updatingIds={updatingIds}
+            />
+          ))}
+
           {visibleCountries.length === 0 ? (
             <EmptyState
               title="Sin resultados"
@@ -190,6 +246,32 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
                 updatingIds={updatingIds}
               />
             ))
+          )}
+
+          {lastSections.map(section =>
+            section.type === 'extra' ? (
+              <ExtraStickerSection
+                key={section.id}
+                section={section}
+                stickers={sectionStickersMap.get(section.id) ?? []}
+                filter={filter}
+                searchQuery={searchQuery}
+                onIncrement={id => updateQuantity(id, 1)}
+                onDecrement={id => updateQuantity(id, -1)}
+                updatingIds={updatingIds}
+              />
+            ) : (
+              <SectionCard
+                key={section.id}
+                section={section}
+                stickers={sectionStickersMap.get(section.id) ?? []}
+                filter={filter}
+                searchQuery={searchQuery}
+                onIncrement={id => updateQuantity(id, 1)}
+                onDecrement={id => updateQuantity(id, -1)}
+                updatingIds={updatingIds}
+              />
+            )
           )}
         </section>
       </main>

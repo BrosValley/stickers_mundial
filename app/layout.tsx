@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/ui/ThemeProvider'
 import { PwaSetup } from '@/components/ui/PwaSetup'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
 import './globals.css'
+import 'flag-icons/css/flag-icons.min.css'
 
 const inter = Inter({ subsets: ['latin'] })
 

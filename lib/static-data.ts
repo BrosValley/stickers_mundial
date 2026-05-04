@@ -81,13 +81,24 @@ export const getSections = unstable_cache(
 export const getStickers = unstable_cache(
   async (collectionId: string): Promise<Sticker[]> => {
     const supabase = createClient()
-    const { data, error } = await supabase
-      .from('stickers')
-      .select('*')
-      .eq('collection_id', collectionId)
-      .order('sort_order', { ascending: true })
-    if (error) throw error
-    return data
+    const PAGE = 1000
+    const all: Sticker[] = []
+    let from = 0
+
+    while (true) {
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('*')
+        .eq('collection_id', collectionId)
+        .order('sort_order', { ascending: true })
+        .range(from, from + PAGE - 1)
+      if (error) throw error
+      all.push(...(data ?? []))
+      if (!data || data.length < PAGE) break
+      from += PAGE
+    }
+
+    return all
   },
   ['stickers'],
   { tags: ['static-data'], revalidate: false }

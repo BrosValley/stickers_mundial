@@ -57,6 +57,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
+    const supabase = createClient()
 
     if (mode === 'login') {
       const response = await fetch('/auth/login', {

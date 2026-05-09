@@ -28,9 +28,6 @@ export function AlbumCard({ collection, progress, userId = null, featured = fals
           <span className="rounded-full border border-(--accent)/30 bg-(--accent)/10 px-3 py-1 text-xs font-semibold text-(--accent)">
             {percentage === 100 ? 'Completado' : percentage > 0 ? 'En progreso' : 'Disponible'}
           </span>
-          <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium text-(--muted)">
-            Colección
-          </span>
         </div>
 
         <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-(--surface-soft) shadow-inner">

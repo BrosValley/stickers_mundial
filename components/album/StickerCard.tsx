@@ -8,9 +8,10 @@ interface StickerCardProps {
   onIncrement: (stickerId: string) => void
   onDecrement: (stickerId: string) => void
   isUpdating?: boolean
+  tutorialTarget?: string
 }
 
-export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: StickerCardProps) {
+export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating, tutorialTarget }: StickerCardProps) {
   const state = calcStickerState(sticker.quantity)
   const isObtained = state === 'obtained'
   const isRepeated = state === 'repeated'
@@ -23,6 +24,7 @@ export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: S
 
   return (
     <div
+      data-album-tour={tutorialTarget}
       role="button"
       tabIndex={0}
       aria-label={`${sticker.code}${sticker.name ? ` ${sticker.name}` : ''}. Cantidad ${sticker.quantity}`}
@@ -36,6 +38,7 @@ export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: S
       }}
     >
       <button
+          data-album-tour={tutorialTarget ? `${tutorialTarget}-decrement` : undefined}
           onClick={(e) => { e.stopPropagation(); onDecrement(sticker.id) }}
           disabled={sticker.quantity === 0 || isUpdating}
           aria-label={`Restar ${sticker.code}`}
@@ -44,13 +47,11 @@ export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: S
           −
         </button>
       <div className="flex w-max flex-1 items-center justify-center rounded-2xl bg-(--surface-soft) ring-1 ring-inset ring-white/10 transition group-hover:scale-105 px-4 py-2">
-        <span className={`font-mono font-bold leading-none tracking-tight ${sticker.number >= 100 ? 'text-xl' : 'text-3xl'}`}>
+        <span className="font-mono text-3xl font-bold leading-none tracking-tight">
           {String(sticker.number).padStart(2, '0')}
         </span>
       </div>
-      {sticker.code.includes('-') && (
-        <span className="font-mono text-xs font-bold tracking-wide">{sticker.code.split('-')[0]}</span>
-      )}
+      <span className="font-mono text-xs font-bold tracking-wide">{sticker.code.split('-')[0]}</span>
       {sticker.name && (
         <span className="line-clamp-2 px-1 text-center text-[11px] leading-tight opacity-75">{sticker.name}</span>
       )}
@@ -68,7 +69,7 @@ export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: S
       )}
 
       {isRepeated && (
-        <span className="absolute -right-1 -top-1 grid size-7 place-content-center rounded-full bg-(--primary) text-[10px] font-bold text-white shadow-lg shadow-(--primary)/30">
+        <span data-album-tour={tutorialTarget ? `${tutorialTarget}-badge` : undefined} className="absolute -right-1 -top-1 grid size-7 place-content-center rounded-full bg-(--primary) text-[10px] font-bold text-white shadow-lg shadow-(--primary)/30">
           x{sticker.quantity - 1}
         </span>
       )}

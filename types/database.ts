@@ -30,6 +30,7 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           nickname: string | null
+          hub_home_tutorial_seen: boolean
           created_at: string
           updated_at: string
         }
@@ -39,6 +40,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           nickname?: string | null
+          hub_home_tutorial_seen?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -48,6 +50,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           nickname?: string | null
+          hub_home_tutorial_seen?: boolean
           updated_at?: string
         }
       }

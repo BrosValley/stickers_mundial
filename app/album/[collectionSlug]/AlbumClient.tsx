@@ -8,9 +8,11 @@ import { GroupNav } from '@/components/album/GroupNav'
 import { CountryCard } from '@/components/album/CountryCard'
 import { SectionCard } from '@/components/album/SectionCard'
 import { ExtraStickerSection } from '@/components/album/ExtraStickerSection'
+import { AlbumContextTips, AlbumOnboardingController } from '@/components/album/AlbumOnboarding'
 import { ShareModal } from '@/components/share/ShareModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
 import { calcCollectionProgress } from '@/lib/progress'
 import { updateStickerQuantity, MIN_QUANTITY, MAX_QUANTITY } from '@/lib/stickers'
 import { getOrCreateShareLink, getShareUrl } from '@/lib/share'
@@ -19,20 +21,22 @@ import type { Collection, Group, Country, Section, StickerWithQuantity, StickerF
 import Link from 'next/link'
 
 interface AlbumClientProps {
-  user: { id: string; email: string; nickname: string }
+  user: { id: string; email: string; nickname: string } | null
   collection: Collection
   groups: Group[]
   countries: Country[]
   sections: Section[]
   stickersWithQuantity: StickerWithQuantity[]
   unlockedAchievementCodes: string[]
+  mode?: 'authenticated' | 'preview' | 'sandbox'
+  continueOnboarding?: boolean
 }
 
 type FeedbackToast =
   | { id: string; type: 'achievement'; title: string; description: string; icon: string }
   | { id: string; type: 'progress'; title: string; description: string }
 
-export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes }: AlbumClientProps) {
+export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false }: AlbumClientProps) {
   const [stickers, setStickers] = useState(initial)
   const [filter, setFilter] = useState<StickerFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -41,10 +45,14 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isLoadingShare, setIsLoadingShare] = useState(false)
+  const [loginPrompt, setLoginPrompt] = useState<{ title: string; description: string } | null>(null)
   const [feedbackToasts, setFeedbackToasts] = useState<FeedbackToast[]>([])
   const [unlockedCodes, setUnlockedCodes] = useState(() => new Set(unlockedAchievementCodes))
 
   const fireConfetti = useConfetti()
+  const isSandbox = mode === 'sandbox'
+  const canPersist = Boolean(user) && mode === 'authenticated'
+  const displayNickname = user?.nickname ? `@${user.nickname}` : null
 
   const progress = useMemo(() => calcCollectionProgress(stickers, countries), [stickers, countries])
 
@@ -112,6 +120,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
 
   const initialCheckDone = useRef(false)
   useEffect(() => {
+    if (!user || isSandbox) return
     if (initialCheckDone.current) return
     initialCheckDone.current = true
 
@@ -132,10 +141,18 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
         }, i * 800)
       })
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const updateQuantity = useCallback(async (stickerId: string, delta: number) => {
+    if (!canPersist && !isSandbox) {
+      setLoginPrompt({
+        title: 'Guarda tu progreso con una cuenta',
+        description: 'Puedes explorar la colección completa, pero necesitas iniciar sesión para guardar cambios reales.',
+      })
+      return
+    }
+
     const current = stickers.find(s => s.id === stickerId)
     if (!current) return
     const newQty = Math.min(MAX_QUANTITY, Math.max(MIN_QUANTITY, current.quantity + delta))
@@ -152,8 +169,8 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
         const country = countries.find(item => item.id === current.country_id)
         progressToasts.push({
           type: 'progress',
-          title: 'País completado',
-          description: country ? `${country.name} ya está completo.` : 'Completaste todas las estampas del país.',
+          title: 'Sección completada',
+          description: country ? `${country.name} ya está completo.` : 'Completaste todos los elementos de esta parte.',
         })
       }
 
@@ -216,6 +233,19 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     })
 
     setStickers(nextStickers)
+
+    if (isSandbox) {
+      if (progressToasts.length > 0) fireConfetti()
+      addFeedbackToasts(progressToasts.length > 0 ? progressToasts : [{
+        type: 'progress',
+        title: 'Cambio aplicado',
+        description: 'Cambio aplicado en esta colección de práctica.',
+      }])
+      return
+    }
+
+    if (!user) return
+
     setUpdatingIds(prev => new Set(prev).add(stickerId))
 
     try {
@@ -243,9 +273,17 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     } finally {
       setUpdatingIds(prev => { const next = new Set(prev); next.delete(stickerId); return next })
     }
-  }, [stickers, user.id, collection.id, fireConfetti, countries, groups, sections, unlockedCodes, addFeedbackToasts])
+  }, [addFeedbackToasts, canPersist, collection.id, countries, fireConfetti, groups, isSandbox, sections, stickers, unlockedCodes, user])
 
   const handleShare = useCallback(async () => {
+    if (!user || isSandbox) {
+      setLoginPrompt({
+        title: 'Comparte desde tu cuenta',
+        description: 'Para generar un QR y enlace público necesitas iniciar sesión y abrir una colección de tu biblioteca.',
+      })
+      return
+    }
+
     setIsLoadingShare(true)
     try {
       const link = await getOrCreateShareLink(user.id, collection.id)
@@ -256,7 +294,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     } finally {
       setIsLoadingShare(false)
     }
-  }, [user.id, collection.id])
+  }, [collection.id, isSandbox, user])
 
   const sectionCount = sections.length
 
@@ -264,36 +302,111 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     <div className="min-h-screen bg-(--bg) text-(--text)">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_15%_0%,var(--hero-glow),transparent_32%),radial-gradient(circle_at_90%_10%,var(--hero-glow-secondary),transparent_28%)]" />
 
-      <nav className="sticky top-0 z-20 border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 rounded-xl px-2 py-2 text-(--muted) transition hover:bg-(--surface) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+      <nav className="sticky top-0 z-20 border-b border-(--border) bg-(--bg)/85 px-3 py-2.5 backdrop-blur-xl sm:px-4 sm:py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 sm:gap-4">
+          <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-2 py-2 text-(--muted) transition hover:bg-(--surface) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
             <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="text-sm font-medium">Colecciones</span>
+            <span className="hidden truncate text-sm font-medium min-[420px]:inline">Colecciones</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href={`/logros?back=${encodeURIComponent(`/album/${collection.slug}`)}&collection=${collection.slug}`} className="rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-xs font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-              Logros
-            </Link>
-            <Link href={`/perfil?back=${encodeURIComponent(`/album/${collection.slug}`)}`} className="rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-xs font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-              Perfil
-            </Link>
+          <div className="hidden items-center justify-end gap-2 md:flex">
             <ThemeToggle />
-            <span className="hidden text-xs text-(--muted) sm:block">{user.nickname ? `@${user.nickname}` : user.email}</span>
-            <form action="/auth/signout" method="post">
-              <button className="rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-xs font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                Salir
-              </button>
-            </form>
+            <AlbumOnboardingController
+              mode={mode}
+              userId={user?.id ?? null}
+              collectionSlug={collection.slug}
+              autoOpen={continueOnboarding}
+            />
+            {user && (
+              <>
+                <Link href={`/logros?back=${encodeURIComponent(`/album/${collection.slug}`)}&collection=${collection.slug}`} className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Logros
+                </Link>
+                <Link href={`/perfil?back=${encodeURIComponent(`/album/${collection.slug}`)}`} className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Perfil
+                </Link>
+              </>
+            )}
+            {user ? (
+              <form action="/auth/signout" method="post">
+                <button className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Cerrar sesión
+                </button>
+              </form>
+            ) : (
+              <Link data-album-tour="auth-action" href={`/login?next=${encodeURIComponent(`/album/${collection.slug}`)}`} className="h-10 shrink-0 whitespace-nowrap rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                Iniciar sesión
+              </Link>
+            )}
           </div>
+
+          <ResponsiveMenu targetAttribute={{ 'data-album-tour': 'album-menu-button' }}>
+              <div data-menu-keep-open="true" className="flex items-center justify-between rounded-2xl bg-(--surface-soft) px-3 py-2">
+                <span className="text-sm font-semibold text-(--muted)">Tema</span>
+                <ThemeToggle />
+              </div>
+              <AlbumOnboardingController
+                mode={mode}
+                userId={user?.id ?? null}
+                collectionSlug={collection.slug}
+                autoOpen={continueOnboarding}
+              />
+            {user && (
+              <>
+                <Link href={`/logros?back=${encodeURIComponent(`/album/${collection.slug}`)}&collection=${collection.slug}`} className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Logros
+                </Link>
+                <Link href={`/perfil?back=${encodeURIComponent(`/album/${collection.slug}`)}`} className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Perfil
+                </Link>
+              </>
+            )}
+            {user ? (
+              <form action="/auth/signout" method="post">
+                <button className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Cerrar sesión
+                </button>
+              </form>
+            ) : (
+              <Link data-album-tour="auth-action" href={`/login?next=${encodeURIComponent(`/album/${collection.slug}`)}`} className="flex min-h-11 items-center justify-center rounded-2xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                Iniciar sesión
+              </Link>
+            )}
+          </ResponsiveMenu>
         </div>
       </nav>
 
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:py-8">
-        <StatsBar progress={progress} collectionName={collection.name} />
+        {user && (
+          <span className="inline-flex items-center rounded-full border border-(--accent)/30 bg-(--accent)/10 px-3 py-1 text-md font-semibold text-(--accent)">
+            Hola, {displayNickname}
+          </span>
+        )}
 
-        <section className="rounded-3xl border border-(--border) bg-(--surface)/80 p-3 shadow-sm backdrop-blur sm:p-4">
+        {!canPersist && (
+          <div data-album-tour="mode-banner" className="rounded-3xl border border-(--accent)/30 bg-(--accent)/10 p-4 text-sm text-(--text) shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-bold text-(--accent)">Colección de práctica</p>
+                <p className="mt-1 leading-6 text-(--muted)">
+                  Puedes explorar navegación, filtros y estructura. Para guardar progreso o compartir una colección real, inicia sesión.
+                </p>
+              </div>
+              {!user && (
+                <Link data-album-tour="auth-action" href={`/login?next=${encodeURIComponent(`/album/${collection.slug}`)}`} className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-(--primary) px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Guardar mi progreso
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+        <AlbumContextTips mode={mode} userId={user?.id ?? null} collectionSlug={collection.slug} />
+        <div data-album-tour="stats">
+          <StatsBar progress={progress} collectionName={collection.name} />
+        </div>
+
+        <section data-album-tour="tools" className="rounded-3xl border border-(--border) bg-(--surface)/80 p-3 shadow-sm backdrop-blur sm:p-4">
           <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-(--muted)">
             <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1">
               {visibleCountries.length} países visibles
@@ -307,19 +420,20 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <label className="relative flex-1">
-              <span className="sr-only">Buscar estampas</span>
+              <span className="sr-only">Buscar elementos</span>
               <svg className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-(--muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z" />
               </svg>
               <input
                 type="text"
-                placeholder="Buscar país, código o estampa"
+                placeholder="Buscar nombre, código o elemento"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="h-12 w-full rounded-2xl border border-(--border) bg-(--surface-soft) pl-11 pr-4 text-sm text-(--text) placeholder-(--muted) transition focus:border-(--accent) focus:outline-none focus:ring-2 focus:ring-(--accent)/20"
               />
             </label>
             <button
+              data-album-tour="share"
               onClick={handleShare}
               disabled={isLoadingShare}
               className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-(--primary) px-5 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:-translate-y-0.5 hover:bg-(--primary-hover) disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
@@ -340,7 +454,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section data-album-tour="stickers" className="space-y-4">
           {!selectedGroupId && firstSections.map(section => (
             <SectionCard
               key={section.id}
@@ -357,10 +471,10 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
           {visibleCountries.length === 0 ? (
             <EmptyState
               title="Sin resultados"
-              description="Ajusta la búsqueda o cambia el filtro para ver más países y estampas."
+              description="Ajusta la búsqueda o cambia el filtro para ver más elementos."
             />
           ) : (
-            visibleCountries.map(country => (
+            visibleCountries.map((country, index) => (
               <CountryCard
                 key={country.id}
                 country={country}
@@ -370,6 +484,8 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
                 onIncrement={id => updateQuantity(id, 1)}
                 onDecrement={id => updateQuantity(id, -1)}
                 updatingIds={updatingIds}
+                defaultExpanded={isSandbox && index === 0}
+                tutorialTarget={isSandbox && index === 0 ? 'demo-country-card' : undefined}
               />
             ))
           )}
@@ -411,6 +527,75 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
           shareUrl={shareUrl}
         />
       )}
+
+      <LoginPromptModal
+        open={Boolean(loginPrompt)}
+        title={loginPrompt?.title ?? ''}
+        description={loginPrompt?.description ?? ''}
+        nextPath={`/album/${collection.slug}`}
+        onClose={() => setLoginPrompt(null)}
+      />
+    </div>
+  )
+}
+
+function LoginPromptModal({
+  open,
+  title,
+  description,
+  nextPath,
+  onClose,
+}: {
+  open: boolean
+  title: string
+  description: string
+  nextPath: string
+  onClose: () => void
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center px-4">
+      <button
+        type="button"
+        aria-label="Cerrar"
+        className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-sm rounded-3xl border border-(--border) bg-(--surface) p-5 text-(--text) shadow-2xl sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-(--accent)/15 text-(--accent)">
+            <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar aviso"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-(--muted) transition hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+          >
+            ×
+          </button>
+        </div>
+        <h2 className="mt-4 text-xl font-bold leading-tight text-(--text)">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-(--muted)">{description}</p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-2xl px-4 py-2.5 text-sm font-semibold text-(--muted) transition hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+          >
+            Seguir explorando
+          </button>
+          <Link
+            href={`/login?next=${encodeURIComponent(nextPath)}`}
+            className="inline-flex items-center justify-center rounded-2xl bg-(--primary) px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+          >
+            Iniciar sesión
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

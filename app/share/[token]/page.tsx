@@ -1,6 +1,7 @@
 import { AdSlot } from '@/components/ads/AdSlot'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { ShareQrPanel } from '@/components/share/ShareQrPanel'
+import { ThemedLogo } from '@/components/ui/ThemedLogo'
 import { createClient } from '@/lib/supabase/server'
 import { calcCollectionProgress } from '@/lib/progress'
 import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
@@ -61,11 +62,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const shared = await getSharedAlbum(token)
   const ownerLabel = shared?.ownerNickname ? `@${shared.ownerNickname}` : null
   const title = shared
-    ? `Álbum de ${ownerLabel ?? 'coleccionista'}: ${shared.collection.name}`
-    : 'Álbum compartido'
+    ? `Colección de ${ownerLabel ?? 'coleccionista'}: ${shared.collection.name}`
+    : 'Colección compartida'
   const description = shared
-    ? truncateDescription(`Consulta el progreso público del álbum ${shared.collection.name}${ownerLabel ? ` de ${ownerLabel}` : ''}: ${shared.progress.percentage}% completado, ${shared.progress.missing} pendientes y ${shared.progress.duplicates} repetidas disponibles para intercambio.`)
-    : 'Consulta un álbum digital compartido en stickers_checklist.'
+    ? truncateDescription(`Consulta el progreso público de ${shared.collection.name}${ownerLabel ? ` de ${ownerLabel}` : ''}: ${shared.progress.percentage}% completado, ${shared.progress.missing} pendientes y ${shared.progress.duplicates} repetidos disponibles para intercambio.`)
+    : `Consulta una colección digital compartida en ${SITE_NAME}.`
   const url = `${SITE_URL}/share/${token}`
 
   return {
@@ -189,8 +190,8 @@ export default async function SharePage({ params }: PageProps) {
 
       <nav className="border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link href="/" className="text-sm font-semibold text-(--muted) transition hover:text-(--text)">
-            stickers_checklist
+          <Link href="/" className="flex min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+            <ThemedLogo />
           </Link>
           {!user && (
             <Link href="/login" className="rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white">
@@ -242,8 +243,8 @@ export default async function SharePage({ params }: PageProps) {
                 <h2 className="text-lg font-bold text-(--text)">¡Puedes intercambiar!</h2>
                 <p className="mt-2 text-sm leading-6 text-(--muted)">
                   {ownerNickname
-                    ? `${ownerLabel} te puede dar algunas estampas. Más abajo verás los posibles intercambios.`
-                    : 'Más abajo verás qué stickers pueden intercambiarse entre tu colección y la de este usuario.'}
+                    ? `${ownerLabel} tiene algunos repetidos que podrían servirte. Más abajo verás los posibles intercambios.`
+                    : 'Más abajo verás qué elementos pueden intercambiarse entre tu colección y la de este usuario.'}
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
                   <Link href="/" className="rounded-2xl bg-(--accent) px-4 py-3 text-center text-sm font-semibold text-white">Ver mi colección</Link>
@@ -252,11 +253,11 @@ export default async function SharePage({ params }: PageProps) {
               </div>
             ) : (
               <div className="rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-sm">
-                <h2 className="text-lg font-bold text-(--text)">Crea tu propio álbum</h2>
-                <p className="mt-2 text-sm leading-6 text-(--muted)">Guarda una copia, empieza tu checklist y reta a tus amigos a completar el álbum.</p>
+                <h2 className="text-lg font-bold text-(--text)">Crea tu propia colección</h2>
+                <p className="mt-2 text-sm leading-6 text-(--muted)">Guarda una copia, empieza tu checklist y comparte tu avance con otras personas.</p>
                 <div className="mt-4 flex flex-col gap-2">
                   <Link href="/login" className="rounded-2xl bg-(--primary) px-4 py-3 text-center text-sm font-semibold text-white">Empieza tu checklist</Link>
-                  <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Ver más álbumes</Link>
+                  <Link href="/" className="rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-sm font-semibold text-(--text)">Ver más colecciones</Link>
                 </div>
               </div>
             )}
@@ -277,8 +278,8 @@ export default async function SharePage({ params }: PageProps) {
               <h2 className="text-2xl font-bold tracking-tight text-(--text)">Duplicadas disponibles</h2>
               <p className="mt-2 text-sm text-(--muted)">
                 {duplicateStickers.length > 0
-                  ? `${ownerLabel} tiene ${progress.duplicates} repetidas en ${duplicateStickers.length} estampas.`
-                  : `${ownerLabel} todavía no tiene estampas duplicadas.`}
+                  ? `${ownerLabel} tiene ${progress.duplicates} repetidos en ${duplicateStickers.length} elementos.`
+                  : `${ownerLabel} todavía no tiene elementos duplicados.`}
               </p>
             </div>
             <span className="w-fit rounded-full border border-(--accent)/30 bg-(--accent)/10 px-4 py-2 text-sm font-bold text-(--accent)">

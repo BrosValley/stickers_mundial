@@ -1,15 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { sanitizeRedirectPath } from '@/lib/auth-redirect'
-import { auditLog } from '@/lib/security/audit'
-import { enforceRateLimit, getClientIp, rateLimitRules } from '@/lib/security/rate-limit'
-import type { NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest) {
-  const route = 'GET /auth/callback'
-  const rateLimit = enforceRateLimit(request, route, rateLimitRules.auth)
-  if (rateLimit) return rateLimit
-
+export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = sanitizeRedirectPath(searchParams.get('next'))
@@ -34,6 +27,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  auditLog('auth.callback_failed', { route, ip: getClientIp(request), reason: 'exchange_failed' })
   return NextResponse.redirect(`${origin}/login?error=auth_error`)
 }

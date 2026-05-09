@@ -63,7 +63,7 @@ export function SectionCard({
                 )}
               </div>
               <p className="mt-1 text-xs text-(--muted)">
-                {obtained}/{total} elementos · {percentage}%
+                {obtained}/{total} estampas · {percentage}%
               </p>
             </div>
           </div>
@@ -89,7 +89,7 @@ export function SectionCard({
         <div className="border-t border-(--border) bg-(--surface-soft)/60 px-4 pb-4 pt-4 sm:px-5">
           {visibleStickers.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-(--border) bg-(--surface) py-8 text-center text-sm text-(--muted)">
-              No hay elementos con este filtro.
+              No hay estampas con este filtro.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 min-[420px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">

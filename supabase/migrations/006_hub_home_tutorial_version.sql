@@ -1,2 +1,0 @@
-ALTER TABLE profiles
-  ADD COLUMN IF NOT EXISTS hub_home_tutorial_version INTEGER NOT NULL DEFAULT 1;

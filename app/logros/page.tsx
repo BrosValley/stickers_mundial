@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Logros',
-  description: 'Consulta los logros desbloqueados y pendientes de tu álbum de stickers.',
+  description: 'Consulta los logros desbloqueados y pendientes de tus colecciones.',
   robots: { index: false, follow: false },
 }
 

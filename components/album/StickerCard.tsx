@@ -44,11 +44,13 @@ export function StickerCard({ sticker, onIncrement, onDecrement, isUpdating }: S
           −
         </button>
       <div className="flex w-max flex-1 items-center justify-center rounded-2xl bg-(--surface-soft) ring-1 ring-inset ring-white/10 transition group-hover:scale-105 px-4 py-2">
-        <span className="font-mono text-3xl font-bold leading-none tracking-tight">
+        <span className={`font-mono font-bold leading-none tracking-tight ${sticker.number >= 100 ? 'text-xl' : 'text-3xl'}`}>
           {String(sticker.number).padStart(2, '0')}
         </span>
       </div>
-      <span className="font-mono text-xs font-bold tracking-wide">{sticker.code.split('-')[0]}</span>
+      {sticker.code.includes('-') && (
+        <span className="font-mono text-xs font-bold tracking-wide">{sticker.code.split('-')[0]}</span>
+      )}
       {sticker.name && (
         <span className="line-clamp-2 px-1 text-center text-[11px] leading-tight opacity-75">{sticker.name}</span>
       )}

@@ -68,6 +68,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8738082017541934" crossOrigin="anonymous" />
+      </head>
       <body className={`${fredoka.className} bg-[var(--bg)] text-[var(--text)] min-h-screen`} suppressHydrationWarning>
         <ThemeProvider>
           {children}

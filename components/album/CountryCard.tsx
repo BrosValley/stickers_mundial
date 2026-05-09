@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { StickerCard } from './StickerCard'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { calcCountryProgress, filterStickers, searchStickers } from '@/lib/progress'
+import { calcCountryProgress, filterStickers, searchStickers, sortStickersForDisplay } from '@/lib/progress'
 import { FLAG_ICONS } from '@/lib/flags'
 import type { Country, StickerWithQuantity, StickerFilter } from '@/types/album'
 
@@ -31,7 +31,7 @@ export function CountryCard({
     let result = stickers
     result = filterStickers(result, filter)
     result = searchStickers(result, searchQuery)
-    return result
+    return sortStickersForDisplay(result)
   }, [stickers, filter, searchQuery])
 
   if (visibleStickers.length === 0 && filter !== 'all') return null

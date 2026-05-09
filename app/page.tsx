@@ -10,6 +10,7 @@ import { HubHomeTutorialController } from '@/components/home/HubHomeTutorial'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ThemedLogo } from '@/components/ui/ThemedLogo'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 import { HUB_HOME_TUTORIAL_VERSION } from '@/lib/hub-home-tutorial'
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, collectionKeywords } from '@/lib/seo'
 import type { Metadata } from 'next'
@@ -150,11 +151,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <Link data-tutorial="profile-link" href="/perfil" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
                   Perfil
                 </Link>
-                <form action="/auth/signout" method="post">
-                  <button className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                    Cerrar sesión
-                  </button>
-                </form>
+                <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
               </>
             ) : (
               <Link data-tutorial="login-entry" href="/login" className="h-10 shrink-0 whitespace-nowrap rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
@@ -177,11 +174,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <Link data-tutorial="profile-link" href={`/perfil`} className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
                   Perfil
                 </Link>
-                <form action="/auth/signout" method="post">
-                  <button className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                    Cerrar sesión
-                  </button>
-                </form>
+                <LogoutButton className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
               </>
             ) : (
               <Link data-tutorial="login-entry" href="/login" className="flex min-h-11 items-center justify-center rounded-2xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">

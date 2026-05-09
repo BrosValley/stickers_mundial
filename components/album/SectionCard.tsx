@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { StickerCard } from './StickerCard'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { filterStickers, searchStickers } from '@/lib/progress'
+import { filterStickers, searchStickers, sortStickersForDisplay } from '@/lib/progress'
 import type { Section, StickerWithQuantity, StickerFilter } from '@/types/album'
 
 interface SectionCardProps {
@@ -34,7 +34,7 @@ export function SectionCard({
   const visibleStickers = useMemo(() => {
     let result = filterStickers(stickers, filter)
     result = searchStickers(result, searchQuery)
-    return result
+    return sortStickersForDisplay(result)
   }, [stickers, filter, searchQuery])
 
   if (visibleStickers.length === 0 && (filter !== 'all' || searchQuery.trim())) return null

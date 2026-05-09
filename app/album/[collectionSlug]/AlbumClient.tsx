@@ -13,6 +13,7 @@ import { ShareModal } from '@/components/share/ShareModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 import { calcCollectionProgress } from '@/lib/progress'
 import { updateStickerQuantity, MIN_QUANTITY, MAX_QUANTITY } from '@/lib/stickers'
 import { getOrCreateShareLink, getShareUrl } from '@/lib/share'
@@ -329,11 +330,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
               </>
             )}
             {user ? (
-              <form action="/auth/signout" method="post">
-                <button className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Cerrar sesión
-                </button>
-              </form>
+              <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
             ) : (
               <Link data-album-tour="auth-action" href={`/login?next=${encodeURIComponent(`/album/${collection.slug}`)}`} className="h-10 shrink-0 whitespace-nowrap rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
                 Iniciar sesión
@@ -363,11 +360,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
               </>
             )}
             {user ? (
-              <form action="/auth/signout" method="post">
-                <button className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Cerrar sesión
-                </button>
-              </form>
+              <LogoutButton className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
             ) : (
               <Link data-album-tour="auth-action" href={`/login?next=${encodeURIComponent(`/album/${collection.slug}`)}`} className="flex min-h-11 items-center justify-center rounded-2xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
                 Iniciar sesión

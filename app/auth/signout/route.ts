@@ -11,5 +11,14 @@ export async function POST(request: NextRequest) {
   const { supabase, user } = auth
   await supabase.auth.signOut()
   auditLog('auth.signout', { route, userId: user.id })
-  return NextResponse.redirect(new URL('/', request.url))
+
+  if (request.headers.get('accept')?.includes('application/json')) {
+    return NextResponse.json({ ok: true })
+  }
+
+  const forwardedProto = request.headers.get('x-forwarded-proto') ?? request.nextUrl.protocol.replace(':', '')
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  const origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : request.nextUrl.origin
+
+  return NextResponse.redirect(new URL('/', origin))
 }

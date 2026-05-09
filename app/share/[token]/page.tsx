@@ -126,15 +126,18 @@ export default async function SharePage({ params }: PageProps) {
   const ownerLabel = ownerNickname ? `@${ownerNickname}` : 'Este coleccionista'
   const shareUrl = `${SITE_URL}/share/${token}`
   const countryMap = new Map(countries.map(country => [country.id, country]))
-  const grouped = new Map<string, typeof stickersWithQuantity>()
   const duplicateStickers = stickersWithQuantity.filter(sticker => sticker.quantity > 1)
+  const grouped = user ? new Map<string, typeof stickersWithQuantity>() : (() => {
+    const map = new Map<string, typeof stickersWithQuantity>()
+    for (const sticker of stickersWithQuantity) {
+      const key = sticker.country_id ?? 'other'
+      const current = map.get(key) ?? []
+      current.push(sticker)
+      map.set(key, current)
+    }
+    return map
+  })()
   const duplicateGroups = new Map<string, typeof duplicateStickers>()
-  for (const sticker of stickersWithQuantity) {
-    const key = sticker.country_id ?? 'other'
-    const current = grouped.get(key) ?? []
-    current.push(sticker)
-    grouped.set(key, current)
-  }
   for (const sticker of duplicateStickers) {
     const key = sticker.country_id ?? 'other'
     const current = duplicateGroups.get(key) ?? []
@@ -329,45 +332,47 @@ export default async function SharePage({ params }: PageProps) {
           )}
         </section>
 
-        <section>
-          <h2 className="text-2xl font-bold tracking-tight text-(--text)">Checklist visible</h2>
-          <div className="mt-5 space-y-4">
-            {Array.from(grouped.entries()).map(([countryId, stickers]) => {
-              const country = countryMap.get(countryId)
-              const obtained = stickers.filter(sticker => sticker.quantity > 0).length
-              return (
-                <article key={countryId} className="rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="flex items-center gap-2 font-semibold text-(--text)">
-                      {country && FLAG_ICONS[country.code] && (
-                        <span className={`fi fi-${FLAG_ICONS[country.code]} text-xl`} aria-hidden="true" />
-                      )}
-                      <span>{country?.name ?? 'Sección especial'}</span>
-                    </h3>
-                    <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs text-(--muted)">
-                      {obtained}/{stickers.length}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 min-[420px]:grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9">
-                    {stickers.map(sticker => (
-                      <div
-                        key={sticker.id}
-                        className={`rounded-2xl border p-3 text-center text-xs ${
-                          sticker.quantity > 0
-                            ? 'border-(--accent)/40 bg-(--accent)/10 text-(--accent)'
-                            : 'border-(--border) bg-(--surface-soft) text-(--muted)'
-                        }`}
-                      >
-                        <div className="font-mono font-bold">{sticker.code}</div>
-                        <div className="mt-1 line-clamp-2 text-[11px]">{sticker.name ?? (sticker.quantity > 0 ? 'Completada' : 'Pendiente')}</div>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
+        {!user && (
+          <section>
+            <h2 className="text-2xl font-bold tracking-tight text-(--text)">Checklist visible</h2>
+            <div className="mt-5 space-y-4">
+              {Array.from(grouped.entries()).map(([countryId, stickers]) => {
+                const country = countryMap.get(countryId)
+                const obtained = stickers.filter(sticker => sticker.quantity > 0).length
+                return (
+                  <article key={countryId} className="rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="flex items-center gap-2 font-semibold text-(--text)">
+                        {country && FLAG_ICONS[country.code] && (
+                          <span className={`fi fi-${FLAG_ICONS[country.code]} text-xl`} aria-hidden="true" />
+                        )}
+                        <span>{country?.name ?? 'Sección especial'}</span>
+                      </h3>
+                      <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs text-(--muted)">
+                        {obtained}/{stickers.length}
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 min-[420px]:grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9">
+                      {stickers.map(sticker => (
+                        <div
+                          key={sticker.id}
+                          className={`rounded-2xl border p-3 text-center text-xs ${
+                            sticker.quantity > 0
+                              ? 'border-(--accent)/40 bg-(--accent)/10 text-(--accent)'
+                              : 'border-(--border) bg-(--surface-soft) text-(--muted)'
+                          }`}
+                        >
+                          <div className="font-mono font-bold">{sticker.code}</div>
+                          <div className="mt-1 line-clamp-2 text-[11px]">{sticker.name ?? (sticker.quantity > 0 ? 'Completada' : 'Pendiente')}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         <AdSlot variant="footer" title="Premium sin anuncios" description="Estructura lista para futuros planes con álbumes privados, estadísticas avanzadas y exportación de progreso." />
       </main>

@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -10,7 +9,6 @@ interface LogoutButtonProps {
 }
 
 export function LogoutButton({ children = 'Cerrar sesión', className }: LogoutButtonProps) {
-  const router = useRouter()
   const [isPending, setIsPending] = useState(false)
 
   async function handleLogout() {
@@ -23,8 +21,7 @@ export function LogoutButton({ children = 'Cerrar sesión', className }: LogoutB
         headers: { Accept: 'application/json' },
       })
     } finally {
-      router.push('/')
-      router.refresh()
+      window.location.href = '/'
     }
   }
 

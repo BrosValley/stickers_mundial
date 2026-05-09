@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { getOrCreateShareLink, getShareUrl } from '@/lib/share'
 import { ShareModal } from './ShareModal'
 
@@ -15,8 +15,16 @@ export function ShareAlbumButton({ userId, collectionId, className = '' }: Share
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
+  const justClosedRef = useRef(false)
+
+  const handleClose = useCallback(() => {
+    justClosedRef.current = true
+    setIsOpen(false)
+    setTimeout(() => { justClosedRef.current = false }, 400)
+  }, [])
 
   const handleShare = useCallback(async () => {
+    if (justClosedRef.current) return
     if (!userId) {
       setShowLoginHint(true)
       return
@@ -51,7 +59,7 @@ export function ShareAlbumButton({ userId, collectionId, className = '' }: Share
       {shareUrl && (
         <ShareModal
           isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
+          onClose={handleClose}
           shareUrl={shareUrl}
         />
       )}

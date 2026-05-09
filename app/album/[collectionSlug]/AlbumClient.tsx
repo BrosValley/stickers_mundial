@@ -46,6 +46,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isLoadingShare, setIsLoadingShare] = useState(false)
+  const shareJustClosedRef = useRef(false)
   const [loginPrompt, setLoginPrompt] = useState<{ title: string; description: string } | null>(null)
   const [feedbackToasts, setFeedbackToasts] = useState<FeedbackToast[]>([])
   const [unlockedCodes, setUnlockedCodes] = useState(() => new Set(unlockedAchievementCodes))
@@ -276,7 +277,14 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     }
   }, [addFeedbackToasts, canPersist, collection.id, countries, fireConfetti, groups, isSandbox, sections, stickers, unlockedCodes, user])
 
+  const handleShareModalClose = useCallback(() => {
+    shareJustClosedRef.current = true
+    setIsShareModalOpen(false)
+    setTimeout(() => { shareJustClosedRef.current = false }, 400)
+  }, [])
+
   const handleShare = useCallback(async () => {
+    if (shareJustClosedRef.current) return
     if (!user || isSandbox) {
       setLoginPrompt({
         title: 'Comparte desde tu cuenta',
@@ -516,7 +524,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       {shareUrl && (
         <ShareModal
           isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
+          onClose={handleShareModalClose}
           shareUrl={shareUrl}
         />
       )}

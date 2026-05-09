@@ -21,14 +21,20 @@ export async function GET(request: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const nickname = user.user_metadata?.nickname as string | undefined
+        const fullName = user.user_metadata?.full_name as string | undefined
+        const avatarUrl = user.user_metadata?.avatar_url as string | undefined
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any).from('profiles').upsert({
+        const { error: upsertError } = await (supabase as any).from('profiles').upsert({
           id: user.id,
           email: user.email ?? null,
-          full_name: user.user_metadata?.full_name ?? null,
-          avatar_url: user.user_metadata?.avatar_url ?? null,
+          ...(fullName ? { full_name: fullName } : {}),
+          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
           ...(nickname ? { nickname } : {}),
+          updated_at: new Date().toISOString(),
         }, { onConflict: 'id', ignoreDuplicates: false })
+        if (upsertError) {
+          auditLog('mutation.failed', { route, ip: getClientIp(request), resourceType: 'profile', reason: upsertError.message })
+        }
       }
       return NextResponse.redirect(`${origin}${next}`)
     }

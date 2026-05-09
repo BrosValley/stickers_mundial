@@ -15,17 +15,14 @@ interface CountryCardProps {
   onIncrement: (stickerId: string) => void
   onDecrement: (stickerId: string) => void
   updatingIds: Set<string>
-  defaultExpanded?: boolean
-  tutorialTarget?: string
 }
 
 export function CountryCard({
-  country, stickers, filter, searchQuery, onIncrement, onDecrement, updatingIds, defaultExpanded = false, tutorialTarget
+  country, stickers, filter, searchQuery, onIncrement, onDecrement, updatingIds
 }: CountryCardProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const progress = useMemo(() => calcCountryProgress(country, stickers), [country, stickers])
-  const forceCodeIcon = country.id === 'demo-country-1'
 
   const visibleStickers = useMemo(() => {
     let result = stickers
@@ -37,7 +34,7 @@ export function CountryCard({
   if (visibleStickers.length === 0 && filter !== 'all') return null
 
   return (
-    <article data-album-tour={tutorialTarget} className="overflow-hidden rounded-3xl border border-(--border) bg-(--surface) shadow-sm transition hover:border-(--accent)/30 hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/20">
+    <article className="overflow-hidden rounded-3xl border border-(--border) bg-(--surface) shadow-sm transition hover:border-(--accent)/30 hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/20">
       <button
         className="w-full p-4 text-left transition hover:bg-(--surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--focus) sm:p-5"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -45,8 +42,8 @@ export function CountryCard({
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl ${!forceCodeIcon && FLAG_ICONS[country.code] ? '' : 'border border-(--border) bg-(--surface-soft)'}`}>
-              {!forceCodeIcon && FLAG_ICONS[country.code] ? (
+            <div className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl ${FLAG_ICONS[country.code] ? '' : 'border border-(--border) bg-(--surface-soft)'}`}>
+              {FLAG_ICONS[country.code] ? (
                 <span
                   className={`fi fi-${FLAG_ICONS[country.code]} text-3xl`}
                   role="img"
@@ -66,7 +63,7 @@ export function CountryCard({
                 )}
               </div>
               <p className="mt-1 text-xs text-(--muted)">
-                {progress.obtained}/{progress.total} elementos · {progress.percentage}%
+                {progress.obtained}/{progress.total} estampas · {progress.percentage}%
               </p>
             </div>
           </div>
@@ -92,30 +89,19 @@ export function CountryCard({
         <div className="border-t border-(--border) bg-(--surface-soft)/60 px-4 pb-4 pt-4 sm:px-5">
           {visibleStickers.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-(--border) bg-(--surface) py-8 text-center text-sm text-(--muted)">
-              No hay elementos con este filtro.
+              No hay estampas con este filtro.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 min-[420px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-              {visibleStickers.map((sticker, index) => {
-                const target = tutorialTarget
-                  ? index === 0
-                    ? 'demo-sticker-card'
-                    : sticker.quantity > 1
-                      ? 'demo-sticker-card-repeated'
-                      : undefined
-                  : undefined
-
-                return (
-                  <StickerCard
-                    key={sticker.id}
-                    sticker={sticker}
-                    onIncrement={onIncrement}
-                    onDecrement={onDecrement}
-                    isUpdating={updatingIds.has(sticker.id)}
-                    tutorialTarget={target}
-                  />
-                )
-              })}
+              {visibleStickers.map(sticker => (
+                <StickerCard
+                  key={sticker.id}
+                  sticker={sticker}
+                  onIncrement={onIncrement}
+                  onDecrement={onDecrement}
+                  isUpdating={updatingIds.has(sticker.id)}
+                />
+              ))}
             </div>
           )}
         </div>

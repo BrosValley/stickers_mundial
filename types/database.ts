@@ -8,6 +8,20 @@ export type Json =
 
 export interface Database {
   public: {
+    Functions: {
+      check_nickname_available: {
+        Args: { p_nickname: string }
+        Returns: boolean
+      }
+      get_user_nickname: {
+        Args: { p_user_id: string }
+        Returns: string | null
+      }
+      get_user_display_name: {
+        Args: { p_user_id: string }
+        Returns: string | null
+      }
+    }
     Tables: {
       profiles: {
         Row: {
@@ -16,6 +30,7 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           nickname: string | null
+          hub_home_tutorial_seen: boolean
           created_at: string
           updated_at: string
         }
@@ -25,6 +40,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           nickname?: string | null
+          hub_home_tutorial_seen?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -34,6 +50,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           nickname?: string | null
+          hub_home_tutorial_seen?: boolean
           updated_at?: string
         }
       }
@@ -244,6 +261,54 @@ export interface Database {
         Update: {
           is_active?: boolean
           updated_at?: string
+        }
+      }
+      achievements: {
+        Row: {
+          code: string
+          name: string
+          description: string
+          icon: string
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          name: string
+          description: string
+          icon: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          name?: string
+          description?: string
+          icon?: string
+          sort_order?: number
+          updated_at?: string
+        }
+      }
+      user_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          collection_id: string
+          achievement_code: string
+          unlocked_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          collection_id: string
+          achievement_code: string
+          unlocked_at?: string
+          created_at?: string
+        }
+        Update: {
+          unlocked_at?: string
         }
       }
     }

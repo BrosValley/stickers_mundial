@@ -1,10 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sanitizeRedirectPath } from '@/lib/auth-redirect'
+import { auditLog } from '@/lib/security/audit'
+import { enforceRateLimit, getClientIp, rateLimitRules } from '@/lib/security/rate-limit'
+import type { NextRequest } from 'next/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const route = 'GET /auth/callback'
+  const rateLimit = enforceRateLimit(request, route, rateLimitRules.auth)
+  if (rateLimit) return rateLimit
+
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const next = sanitizeRedirectPath(searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()
@@ -13,7 +21,8 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const nickname = user.user_metadata?.nickname as string | undefined
-        await supabase.from('profiles').upsert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).from('profiles').upsert({
           id: user.id,
           email: user.email ?? null,
           full_name: user.user_metadata?.full_name ?? null,
@@ -25,5 +34,6 @@ export async function GET(request: Request) {
     }
   }
 
+  auditLog('auth.callback_failed', { route, ip: getClientIp(request), reason: 'exchange_failed' })
   return NextResponse.redirect(`${origin}/login?error=auth_error`)
 }

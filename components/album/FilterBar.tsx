@@ -5,6 +5,7 @@ import type { StickerFilter } from '@/types/album'
 interface FilterBarProps {
   activeFilter: StickerFilter
   onChange: (filter: StickerFilter) => void
+  hideSpecial?: boolean
 }
 
 const FILTERS: { value: StickerFilter; label: string }[] = [
@@ -12,14 +13,18 @@ const FILTERS: { value: StickerFilter; label: string }[] = [
   { value: 'missing', label: 'Faltantes' },
   { value: 'complete', label: 'Completas' },
   { value: 'repeated', label: 'Repetidas' },
+  { value: 'special', label: 'Especiales' },
 ]
 
-export function FilterBar({ activeFilter, onChange }: FilterBarProps) {
+export function FilterBar({ activeFilter, onChange, hideSpecial = false }: FilterBarProps) {
+  const filters = hideSpecial ? FILTERS.filter(filter => filter.value !== 'special') : FILTERS
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="Filtros de estampas">
-      {FILTERS.map(f => (
+    <div data-album-tour="filters" className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="Filtros de elementos">
+      {filters.map(f => (
         <button
           key={f.value}
+          data-album-tour={f.value === 'repeated' ? 'repeated-filter' : undefined}
           onClick={() => onChange(f.value)}
           className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) ${
             activeFilter === f.value

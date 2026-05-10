@@ -45,11 +45,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 interface HomePageProps {
-  searchParams?: Promise<{ onboarding?: string }>
+  searchParams?: Promise<{ onboarding?: string; code?: string }>
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams
+
+  // Supabase email confirmation lands here if /auth/callback isn't whitelisted yet
+  if (params?.code) {
+    const { redirect } = await import('next/navigation')
+    redirect(`/auth/callback?code=${params.code}`)
+  }
+
   const isHomeOnboarding = params?.onboarding === 'home'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -141,28 +148,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <ThemedLogo />
           </Link>
 
-          <div className="hidden items-center justify-end gap-2 md:flex">
-            <ThemeToggle />
-            <HubHomeTutorialController userId={user?.id ?? null} initialSeen={user ? hasSeenHubTutorial : null} />
-            {user ? (
-              <>
-                <NotificationBell />
-                <Link data-tutorial="achievements-link" href="/logros?back=/" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Logros
-                </Link>
-                <Link data-tutorial="profile-link" href="/perfil" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Perfil
-                </Link>
-                <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
-              </>
-            ) : (
-              <Link data-tutorial="login-entry" href="/login" className="h-10 shrink-0 whitespace-nowrap rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                Iniciar sesión
-              </Link>
-            )}
-          </div>
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell />}
 
-          <ResponsiveMenu targetAttribute={{ 'data-tutorial': 'home-menu-button' }}>
+            <div className="hidden items-center gap-2 md:flex">
+              <ThemeToggle />
+              <HubHomeTutorialController userId={user?.id ?? null} initialSeen={user ? hasSeenHubTutorial : null} />
+              {user ? (
+                <>
+                  <Link data-tutorial="achievements-link" href="/logros?back=/" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                    Logros
+                  </Link>
+                  <Link data-tutorial="profile-link" href="/perfil" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                    Perfil
+                  </Link>
+                  <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
+                </>
+              ) : (
+                <Link data-tutorial="login-entry" href="/login" className="h-10 shrink-0 whitespace-nowrap rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:bg-(--primary-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                  Iniciar sesión
+                </Link>
+              )}
+            </div>
+
+            {!user && <Link data-tutorial="login-entry" href="/login" className="flex items-center rounded-xl bg-(--primary) px-3 py-2 text-sm font-semibold text-white md:hidden">
+              Iniciar sesión
+            </Link>}
+
+            <ResponsiveMenu targetAttribute={{ 'data-tutorial': 'home-menu-button' }}>
               <div data-menu-keep-open="true" className="flex items-center justify-between rounded-2xl bg-(--surface-soft) px-3 py-2">
                 <span className="text-sm font-semibold text-(--muted)">Tema</span>
                 <ThemeToggle />
@@ -183,7 +196,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 Iniciar sesión
               </Link>
             )}
-          </ResponsiveMenu>
+            </ResponsiveMenu>
+          </div>
         </div>
       </nav>
 

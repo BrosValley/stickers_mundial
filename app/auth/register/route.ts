@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { auditLog } from '@/lib/security/audit'
 import { enforceRateLimit, getClientIp, rateLimitRules } from '@/lib/security/rate-limit'
 import { normalizeEmail, normalizeNickname, normalizePassword, readLimitedJson, safeError } from '@/lib/security/api'
+import { SITE_URL } from '@/lib/seo'
 
 export async function POST(request: NextRequest) {
   const route = 'POST /auth/register'
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     return safeError('No se pudo crear la cuenta.', 400)
   }
 
-  const callbackUrl = new URL('/auth/callback', request.nextUrl.origin).toString()
+  const callbackUrl = `${SITE_URL}/auth/callback`
 
   const { error } = await supabase.auth.signUp({
     email,

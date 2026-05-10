@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { acceptExchange, rejectExchange, cancelExchange } from '@/app/actions/exchange'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import type { ExchangeStatus, StickerWithQuantity, Country } from '@/types/album'
 import Link from 'next/link'
 
@@ -83,14 +84,17 @@ export function ExchangeDetailClient({
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
-      <nav className="border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <Link href="/" className="text-(--muted) hover:text-(--text) transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-base font-semibold">Propuesta de intercambio</h1>
+      <nav className="sticky top-0 z-20 border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-(--muted) hover:text-(--text) transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <h1 className="text-base font-semibold">Propuesta de intercambio</h1>
+          </div>
+          <NotificationBell />
         </div>
       </nav>
 

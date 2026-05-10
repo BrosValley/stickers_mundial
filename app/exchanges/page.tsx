@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getOwnerNickname } from '@/lib/profile.server'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import type { ExchangeRequest, ExchangeStatus } from '@/types/album'
 import Link from 'next/link'
 
@@ -18,15 +19,20 @@ export default async function ExchangesPage() {
 
   const requests = (rawRequests ?? []) as ExchangeRequest[]
 
-  // Fetch unique nicknames for the other party in each exchange
   const otherUserIds = [...new Set(
     requests.map(r => r.owner_id === user.id ? r.requester_id : r.owner_id)
   )]
-  const nicknameMap = new Map<string, string | null>()
-  await Promise.all(
-    otherUserIds.map(async id => {
-      nicknameMap.set(id, await getOwnerNickname(id))
-    })
+  const collectionIds = [...new Set(requests.map(r => r.collection_id))]
+
+  const [nicknameResults, collectionsResult] = await Promise.all([
+    Promise.all(otherUserIds.map(async id => ({ id, nick: await getOwnerNickname(id) }))),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('collections').select('id, name').in('id', collectionIds.length > 0 ? collectionIds : ['00000000-0000-0000-0000-000000000000']),
+  ])
+
+  const nicknameMap = new Map<string, string | null>(nicknameResults.map(r => [r.id, r.nick]))
+  const collectionMap = new Map<string, string>(
+    (collectionsResult.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name])
   )
 
   const pending = requests.filter(r => r.status === 'pending')
@@ -51,6 +57,7 @@ export default async function ExchangesPage() {
     const otherId = isOwner ? request.requester_id : request.owner_id
     const otherNickname = nicknameMap.get(otherId)
     const otherName = otherNickname ? `@${otherNickname}` : 'Usuario'
+    const collectionName = collectionMap.get(request.collection_id) ?? 'Colección'
     const role = isOwner ? 'Recibida de' : 'Enviada a'
     const count = isOwner
       ? `Recibirías ${request.owner_gives.length} · darías ${request.requester_gives.length}`
@@ -62,6 +69,7 @@ export default async function ExchangesPage() {
         className="flex items-center justify-between gap-4 rounded-2xl border border-(--border) bg-(--surface) p-4 transition hover:border-(--accent)/40 hover:bg-(--surface-soft)"
       >
         <div className="min-w-0">
+          <p className="text-xs font-semibold text-(--accent) truncate mb-0.5">{collectionName}</p>
           <p className="text-sm font-medium text-(--text) truncate">
             <span className="text-(--muted)">{role} </span>{otherName}
           </p>
@@ -76,14 +84,17 @@ export default async function ExchangesPage() {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
-      <nav className="border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <Link href="/" className="text-(--muted) hover:text-(--text) transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-base font-semibold">Mis intercambios</h1>
+      <nav className="sticky top-0 z-20 border-b border-(--border) bg-(--bg)/85 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-(--muted) hover:text-(--text) transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <h1 className="text-base font-semibold">Mis intercambios</h1>
+          </div>
+          <NotificationBell />
         </div>
       </nav>
 

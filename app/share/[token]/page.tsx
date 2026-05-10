@@ -202,39 +202,42 @@ export default async function SharePage({ params }: PageProps) {
             <ThemedLogo />
           </Link>
 
-          {user ? (
-            <>
-              <div className="hidden items-center gap-2 md:flex">
-                <ThemeToggle />
-                <NotificationBell />
-                <Link href="/logros?back=/" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Logros
-                </Link>
-                <Link href="/perfil" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
-                  Perfil
-                </Link>
-                <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
-              </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
 
-              <ResponsiveMenu>
-                <div data-menu-keep-open="true" className="flex items-center justify-between rounded-2xl bg-(--surface-soft) px-3 py-2">
-                  <span className="text-sm font-semibold text-(--muted)">Tema</span>
+            {user ? (
+              <>
+                <div className="hidden items-center gap-2 md:flex">
                   <ThemeToggle />
+                  <Link href="/logros?back=/" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                    Logros
+                  </Link>
+                  <Link href="/perfil" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
+                    Perfil
+                  </Link>
+                  <LogoutButton className="h-10 shrink-0 whitespace-nowrap rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--primary)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) disabled:cursor-wait disabled:opacity-70" />
                 </div>
-                <Link href="/logros?back=/" className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text)">
-                  Logros
-                </Link>
-                <Link href="/perfil" className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text)">
-                  Perfil
-                </Link>
-                <LogoutButton className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) disabled:cursor-wait disabled:opacity-70" />
-              </ResponsiveMenu>
-            </>
-          ) : (
-            <Link href="/login" className="rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white">
-              Empieza tu checklist
-            </Link>
-          )}
+
+                <ResponsiveMenu>
+                  <div data-menu-keep-open="true" className="flex items-center justify-between rounded-2xl bg-(--surface-soft) px-3 py-2">
+                    <span className="text-sm font-semibold text-(--muted)">Tema</span>
+                    <ThemeToggle />
+                  </div>
+                  <Link href="/logros?back=/" className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text)">
+                    Logros
+                  </Link>
+                  <Link href="/perfil" className="flex min-h-11 items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-semibold text-(--muted) transition hover:border-(--accent)/50 hover:bg-(--surface-hover) hover:text-(--text)">
+                    Perfil
+                  </Link>
+                  <LogoutButton className="flex min-h-11 w-full items-center rounded-2xl border border-(--border) bg-(--surface) px-3 py-2 text-left text-sm font-semibold text-(--muted) transition hover:border-(--primary)/50 hover:bg-(--surface-hover) hover:text-(--text) disabled:cursor-wait disabled:opacity-70" />
+                </ResponsiveMenu>
+              </>
+            ) : (
+              <Link href="/login" className="rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white">
+                Empieza tu checklist
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 

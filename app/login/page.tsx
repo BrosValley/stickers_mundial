@@ -174,7 +174,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Nickname (ej. ivory_27)"
+                      placeholder="Nickname (ej. raul_jimenez_7)"
                       value={nickname}
                       onChange={e => setNickname(e.target.value)}
                       required

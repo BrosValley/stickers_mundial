@@ -84,7 +84,7 @@ export default async function AlbumPage({ params, searchParams }: PageProps) {
   const collection = await getCollectionBySlug(collectionSlug)
   if (!collection) redirect('/')
 
-  const [groups, countries, sections, stickers, userStickersResult, achievementsResult, profileResult] = await Promise.all([
+  const [groups, countries, sections, stickers, userStickersResult, achievementsResult, profileResult, pendingExchangesResult] = await Promise.all([
     getGroups(collection.id),
     getCountries(collection.id),
     getSections(collection.id),
@@ -95,6 +95,8 @@ export default async function AlbumPage({ params, searchParams }: PageProps) {
     user ? (supabase as any).from('user_achievements').select('achievement_code').eq('user_id', user.id).eq('collection_id', collection.id) : Promise.resolve({ data: [] }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     user ? (supabase as any).from('profiles').select('nickname').eq('id', user.id).single() : Promise.resolve({ data: null }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user ? (supabase as any).from('exchange_requests').select('id', { count: 'exact', head: true }).eq('owner_id', user.id).eq('status', 'pending') : Promise.resolve({ count: 0 }),
   ])
 
   const userStickers = userStickersResult.data ?? []
@@ -112,6 +114,7 @@ export default async function AlbumPage({ params, searchParams }: PageProps) {
       unlockedAchievementCodes={(achievementsResult.data ?? []).map((row: { achievement_code: string }) => row.achievement_code)}
       mode={user ? 'authenticated' : 'preview'}
       continueOnboarding={continueOnboarding}
+      pendingExchanges={pendingExchangesResult.count ?? 0}
     />
   )
 }

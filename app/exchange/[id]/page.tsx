@@ -1,0 +1,77 @@
+import { redirect, notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
+import { getOwnerNickname } from '@/lib/profile.server'
+import { ExchangeDetailClient } from './ExchangeDetailClient'
+import type { ExchangeRequest, UserSticker } from '@/types/album'
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function ExchangePage({ params }: PageProps) {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rawRequest } = await (supabase as any)
+    .from('exchange_requests')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  const request = rawRequest as ExchangeRequest | null
+  if (!request) notFound()
+
+  const isOwner = user.id === request.owner_id
+  const isRequester = user.id === request.requester_id
+  if (!isOwner && !isRequester) notFound()
+
+  const [countries, stickers, ownerNickname, requesterNickname] = await Promise.all([
+    getCountries(request.collection_id),
+    getStickers(request.collection_id),
+    getOwnerNickname(request.owner_id),
+    getOwnerNickname(request.requester_id),
+  ])
+
+  // Fetch quantities for both users to show sticker details
+  const [ownerUserStickersResult, requesterUserStickersResult] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from('user_stickers')
+      .select('*')
+      .eq('user_id', request.owner_id)
+      .eq('collection_id', request.collection_id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from('user_stickers')
+      .select('*')
+      .eq('user_id', request.requester_id)
+      .eq('collection_id', request.collection_id),
+  ])
+
+  const ownerStickers = mergeStickersWithQuantity(stickers, (ownerUserStickersResult.data ?? []) as UserSticker[])
+  const requesterStickers = mergeStickersWithQuantity(stickers, (requesterUserStickersResult.data ?? []) as UserSticker[])
+
+  const ownerGivesStickers = ownerStickers.filter(s => request.owner_gives.includes(s.id))
+  const requesterGivesStickers = requesterStickers.filter(s => request.requester_gives.includes(s.id))
+
+  const ownerName = ownerNickname ? `@${ownerNickname}` : 'El dueño'
+  const requesterName = requesterNickname ? `@${requesterNickname}` : 'El solicitante'
+
+  return (
+    <ExchangeDetailClient
+      exchangeId={request.id}
+      status={request.status}
+      isOwner={isOwner}
+      requesterName={requesterName}
+      ownerName={ownerName}
+      ownerGives={ownerGivesStickers}
+      requesterGives={requesterGivesStickers}
+      countries={countries}
+      shareToken={request.share_token}
+    />
+  )
+}

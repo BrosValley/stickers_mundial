@@ -31,13 +31,14 @@ interface AlbumClientProps {
   unlockedAchievementCodes: string[]
   mode?: 'authenticated' | 'preview' | 'sandbox'
   continueOnboarding?: boolean
+  pendingExchanges?: number
 }
 
 type FeedbackToast =
   | { id: string; type: 'achievement'; title: string; description: string; icon: string }
   | { id: string; type: 'progress'; title: string; description: string }
 
-export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false }: AlbumClientProps) {
+export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false, pendingExchanges = 0 }: AlbumClientProps) {
   const [stickers, setStickers] = useState(initial)
   const [filter, setFilter] = useState<StickerFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -433,17 +434,33 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
                 className="h-12 w-full rounded-2xl border border-(--border) bg-(--surface-soft) pl-11 pr-4 text-sm text-(--text) placeholder-(--muted) transition focus:border-(--accent) focus:outline-none focus:ring-2 focus:ring-(--accent)/20"
               />
             </label>
-            <button
-              data-album-tour="share"
-              onClick={handleShare}
-              disabled={isLoadingShare}
-              className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-(--primary) px-5 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:-translate-y-0.5 hover:bg-(--primary-hover) disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
-            >
-              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              {isLoadingShare ? 'Generando...' : 'Compartir'}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {pendingExchanges > 0 && (
+                <Link
+                  href="/exchanges"
+                  className="relative flex h-12 items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-900/20 px-4 text-sm font-semibold text-amber-300 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+                >
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  <span>Intercambios</span>
+                  <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black">
+                    {pendingExchanges}
+                  </span>
+                </Link>
+              )}
+              <button
+                data-album-tour="share"
+                onClick={handleShare}
+                disabled={isLoadingShare}
+                className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-(--primary) px-5 text-sm font-semibold text-white shadow-lg shadow-(--primary)/20 transition hover:-translate-y-0.5 hover:bg-(--primary-hover) disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+              >
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                {isLoadingShare ? 'Generando...' : 'Compartir'}
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-3">

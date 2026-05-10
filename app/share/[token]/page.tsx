@@ -271,7 +271,17 @@ export default async function SharePage({ params }: PageProps) {
 
         {matchResult && (
           <section id="intercambios" aria-label="Comparación de intercambios">
-            <MatchClient matchResult={matchResult} ownerName={ownerLabel} countries={countries} embedded />
+            <MatchClient
+              matchResult={matchResult}
+              ownerName={ownerLabel}
+              countries={countries}
+              embedded
+              exchangeContext={showMatch ? {
+                collectionId: collection.id,
+                ownerId: shareLink.user_id,
+                shareToken: token,
+              } : undefined}
+            />
           </section>
         )}
 

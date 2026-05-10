@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
-import type { MatchResult, Country, StickerWithQuantity } from '@/types/album'
+import type { MatchResult, Country, Section, StickerWithQuantity } from '@/types/album'
 import { proposeExchange } from '@/app/actions/exchange'
 import Link from 'next/link'
 
@@ -15,11 +15,12 @@ interface MatchClientProps {
   matchResult: MatchResult
   ownerName: string
   countries: Country[]
+  sections?: Section[]
   embedded?: boolean
   exchangeContext?: ExchangeContext
 }
 
-export function MatchClient({ matchResult, ownerName, countries, embedded = false, exchangeContext }: MatchClientProps) {
+export function MatchClient({ matchResult, ownerName, countries, sections = [], embedded = false, exchangeContext }: MatchClientProps) {
   const { ownerCanGive, visitorCanGive, possibleExchanges } = matchResult
 
   const [selectedFromOwner, setSelectedFromOwner] = useState<Set<string>>(new Set())
@@ -29,11 +30,12 @@ export function MatchClient({ matchResult, ownerName, countries, embedded = fals
   const [error, setError] = useState<string | null>(null)
 
   const countryMap = useMemo(() => new Map(countries.map(c => [c.id, c])), [countries])
+  const sectionMap = useMemo(() => new Map(sections.map(s => [s.id, s])), [sections])
 
   function groupByCountry(stickers: StickerWithQuantity[]) {
     const grouped = new Map<string, StickerWithQuantity[]>()
     for (const s of stickers) {
-      const key = s.country_id ?? 'other'
+      const key = s.country_id ?? s.section_id ?? 'other'
       const arr = grouped.get(key) ?? []
       arr.push(s)
       grouped.set(key, arr)
@@ -125,9 +127,8 @@ export function MatchClient({ matchResult, ownerName, countries, embedded = fals
               title={`Lo que ${ownerName} te puede dar (${ownerCanGive.length})`}
               grouped={ownerGrouped}
               countryMap={countryMap}
+              sectionMap={sectionMap}
               emptyMessage={`${ownerName} no tiene duplicados que te falten.`}
-              badgeColor="bg-green-900/50 text-green-300 border-green-500/30"
-              selectedBadgeColor="bg-green-500/30 text-green-200 border-green-400 ring-2 ring-green-400/50"
               selected={selectedFromOwner}
               onToggle={exchangeContext ? toggleOwner : undefined}
               allCount={totalOwnerStickers}
@@ -142,9 +143,8 @@ export function MatchClient({ matchResult, ownerName, countries, embedded = fals
               title={`Lo que tú le puedes dar (${visitorCanGive.length})`}
               grouped={visitorGrouped}
               countryMap={countryMap}
+              sectionMap={sectionMap}
               emptyMessage="No tienes duplicados que le falten."
-              badgeColor="bg-amber-900/50 text-amber-300 border-amber-500/30"
-              selectedBadgeColor="bg-amber-500/30 text-amber-200 border-amber-400 ring-2 ring-amber-400/50"
               selected={selectedFromVisitor}
               onToggle={exchangeContext ? toggleVisitor : undefined}
               allCount={totalVisitorStickers}
@@ -202,16 +202,14 @@ function SummaryCard({ label, value, color }: { label: string; value: number; co
 }
 
 function SelectableStickerSection({
-  title, grouped, countryMap, emptyMessage,
-  badgeColor, selectedBadgeColor,
+  title, grouped, countryMap, sectionMap, emptyMessage,
   selected, onToggle, onSelectAll, allCount,
 }: {
   title: string
   grouped: Map<string, StickerWithQuantity[]>
   countryMap: Map<string, Country>
+  sectionMap: Map<string, Section>
   emptyMessage: string
-  badgeColor: string
-  selectedBadgeColor: string
   selected: Set<string>
   onToggle?: (id: string) => void
   onSelectAll?: () => void
@@ -233,7 +231,10 @@ function SelectableStickerSection({
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 className="font-semibold">{title}</h3>
         {onSelectAll && (
-          <button onClick={onSelectAll} className="text-xs text-(--accent) hover:underline">
+          <button
+            onClick={onSelectAll}
+            className="rounded-lg border border-(--border) bg-(--surface-soft) px-3 py-1.5 text-xs font-medium text-(--muted) transition hover:border-violet-500/60 hover:bg-violet-500/10 hover:text-violet-400"
+          >
             {allSelected ? 'Deseleccionar todas' : 'Seleccionar todas'}
           </button>
         )}
@@ -243,11 +244,10 @@ function SelectableStickerSection({
       )}
       <div className="space-y-4">
         {Array.from(grouped.entries()).map(([countryId, stickers]) => {
-          const country = countryMap.get(countryId)
           return (
             <div key={countryId}>
               <div className="text-sm font-medium text-(--text) mb-2">
-                {country?.name ?? 'Sección especial'}
+                {countryMap.get(countryId)?.name ?? sectionMap.get(countryId)?.name ?? 'Otros'}
               </div>
               <div className="flex flex-wrap gap-2">
                 {stickers.map(s => {
@@ -257,13 +257,14 @@ function SelectableStickerSection({
                       key={s.id}
                       onClick={() => onToggle?.(s.id)}
                       disabled={!onToggle}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border transition-all ${
-                        isSelected ? selectedBadgeColor : badgeColor
-                      } ${onToggle ? 'cursor-pointer hover:opacity-80 active:scale-95' : 'cursor-default'}`}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-all ${
+                        isSelected
+                          ? 'bg-violet-600 text-white border-violet-500 shadow-sm shadow-violet-500/30'
+                          : 'bg-(--surface-soft) text-(--muted) border-(--border) hover:border-violet-500/40 hover:text-(--text)'
+                      } ${onToggle ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                     >
+                      {isSelected && <span className="font-sans text-[10px]">✓</span>}
                       {s.code}
-                      {s.quantity > 1 && <span className="opacity-70">×{s.quantity - 1}</span>}
-                      {isSelected && <span className="ml-0.5 font-sans">✓</span>}
                     </button>
                   )
                 })}

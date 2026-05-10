@@ -14,6 +14,8 @@ interface ExchangeDetailClientProps {
   ownerName: string
   ownerGives: StickerWithQuantity[]
   requesterGives: StickerWithQuantity[]
+  unavailableOwnerGives: string[]
+  unavailableRequesterGives: string[]
   countries: Country[]
   shareToken: string
 }
@@ -26,6 +28,8 @@ export function ExchangeDetailClient({
   ownerName,
   ownerGives,
   requesterGives,
+  unavailableOwnerGives,
+  unavailableRequesterGives,
   countries,
   shareToken,
 }: ExchangeDetailClientProps) {
@@ -36,6 +40,9 @@ export function ExchangeDetailClient({
   const [done, setDone] = useState(false)
 
   const countryMap = new Map(countries.map(c => [c.id, c]))
+  const unavailableOwnerSet = new Set(unavailableOwnerGives)
+  const unavailableRequesterSet = new Set(unavailableRequesterGives)
+  const hasConflict = unavailableOwnerGives.length > 0 || unavailableRequesterGives.length > 0
 
   function groupByCountry(stickers: StickerWithQuantity[]) {
     const grouped = new Map<string, StickerWithQuantity[]>()
@@ -102,6 +109,25 @@ export function ExchangeDetailClient({
           </span>
         </div>
 
+        {status === 'pending' && hasConflict && !done && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 space-y-1">
+            <p className="text-sm font-semibold text-red-300">
+              {isOwner
+                ? 'Este intercambio ya no se puede completar'
+                : 'Algunas estampas ya no están disponibles'}
+            </p>
+            <p className="text-xs text-red-300/70">
+              {isOwner
+                ? unavailableOwnerGives.length > 0
+                  ? 'Algunas estampas que ibas a dar ya fueron intercambiadas con alguien más.'
+                  : 'La otra persona ya no tiene suficientes repetidas de algunas estampas.'
+                : unavailableRequesterGives.length > 0
+                  ? 'Algunas estampas que ibas a dar ya no las tienes como repetidas.'
+                  : 'La otra persona ya no tiene suficientes repetidas de algunas estampas.'}
+            </p>
+          </div>
+        )}
+
         {done && status === 'pending' && (
           <div className="rounded-2xl border border-green-500/30 bg-green-900/20 p-4 text-sm text-green-300">
             {action === 'accept' ? '¡Intercambio realizado! Los álbumes de ambos han sido actualizados.' :
@@ -118,6 +144,7 @@ export function ExchangeDetailClient({
           grouped={groupByCountry(ownerGives)}
           countryMap={countryMap}
           badgeColor="bg-green-900/50 text-green-300 border-green-500/30"
+          unavailableIds={unavailableOwnerSet}
           emptyMessage="Sin estampas seleccionadas."
         />
 
@@ -130,6 +157,7 @@ export function ExchangeDetailClient({
           grouped={groupByCountry(requesterGives)}
           countryMap={countryMap}
           badgeColor="bg-amber-900/50 text-amber-300 border-amber-500/30"
+          unavailableIds={unavailableRequesterSet}
           emptyMessage="Sin estampas seleccionadas."
         />
 
@@ -141,7 +169,8 @@ export function ExchangeDetailClient({
               <div className="flex gap-3">
                 <button
                   onClick={() => handleAction('accept')}
-                  disabled={isPending}
+                  disabled={isPending || hasConflict}
+                  title={hasConflict ? 'No se puede aceptar: algunas estampas ya no están disponibles' : undefined}
                   className="flex-1 rounded-2xl bg-(--accent) px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {isPending && action === 'accept' ? 'Procesando...' : 'Aceptar intercambio'}
@@ -180,13 +209,14 @@ export function ExchangeDetailClient({
 }
 
 function StickerBlock({
-  title, stickers, grouped, countryMap, badgeColor, emptyMessage,
+  title, stickers, grouped, countryMap, badgeColor, unavailableIds, emptyMessage,
 }: {
   title: string
   stickers: StickerWithQuantity[]
   grouped: Map<string, StickerWithQuantity[]>
   countryMap: Map<string, Country>
   badgeColor: string
+  unavailableIds: Set<string>
   emptyMessage: string
 }) {
   return (
@@ -201,15 +231,22 @@ function StickerBlock({
             <div key={countryId}>
               <p className="text-sm font-medium text-(--text) mb-2">{country?.name ?? 'Sección especial'}</p>
               <div className="flex flex-wrap gap-2">
-                {items.map(s => (
-                  <span
-                    key={s.id}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border ${badgeColor}`}
-                  >
-                    {s.code}
-                    {s.quantity > 1 && <span className="opacity-70">×{s.quantity - 1}</span>}
-                  </span>
-                ))}
+                {items.map(s => {
+                  const unavailable = unavailableIds.has(s.id)
+                  return (
+                    <span
+                      key={s.id}
+                      title={unavailable ? 'Ya no disponible como repetida' : undefined}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border ${
+                        unavailable
+                          ? 'bg-red-900/40 text-red-400 border-red-500/40 line-through opacity-70'
+                          : badgeColor
+                      }`}
+                    >
+                      {s.code}
+                    </span>
+                  )
+                })}
               </div>
             </div>
           )

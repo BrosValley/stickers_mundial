@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id', ignoreDuplicates: false })
         if (upsertError) {
-          auditLog('mutation.failed', { route, ip: getClientIp(request), resourceType: 'profile', reason: upsertError.message })
+          auditLog('auth.callback_failed', { route, ip: getClientIp(request), reason: upsertError.message })
         }
       }
       return NextResponse.redirect(`${origin}${next}`)

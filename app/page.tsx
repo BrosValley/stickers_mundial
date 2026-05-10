@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/home/SectionHeader'
 import { HubHomeTutorialController } from '@/components/home/HubHomeTutorial'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ThemedLogo } from '@/components/ui/ThemedLogo'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
 import { LogoutButton } from '@/components/auth/LogoutButton'
@@ -145,6 +146,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <HubHomeTutorialController userId={user?.id ?? null} initialSeen={user ? hasSeenHubTutorial : null} />
             {user ? (
               <>
+                <NotificationBell />
                 <Link data-tutorial="achievements-link" href="/logros?back=/" className="h-10 shrink-0 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm font-medium text-(--muted) transition hover:border-(--accent)/50 hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
                   Logros
                 </Link>

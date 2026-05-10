@@ -31,6 +31,9 @@ CREATE POLICY "exchange_requests_update_owner" ON public.exchange_requests
 CREATE POLICY "exchange_requests_update_requester" ON public.exchange_requests
   FOR UPDATE USING (auth.uid() = requester_id);
 
+-- Habilitar realtime en la tabla para notificaciones instantáneas
+ALTER PUBLICATION supabase_realtime ADD TABLE public.exchange_requests;
+
 -- Función RPC: ejecuta el intercambio de forma atómica (SECURITY DEFINER omite RLS en user_stickers)
 CREATE OR REPLACE FUNCTION public.execute_exchange(p_exchange_id UUID)
 RETURNS void

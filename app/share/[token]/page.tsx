@@ -10,6 +10,7 @@ import { getOwnerNickname } from '@/lib/profile.server'
 import { FLAG_ICONS } from '@/lib/flags'
 import { SITE_NAME, SITE_URL, collectionKeywords, truncateDescription } from '@/lib/seo'
 import { MatchClient } from './MatchClient'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import type { Metadata } from 'next'
 import type { ShareLink, Collection, UserSticker } from '@/types/album'
 import Link from 'next/link'
@@ -196,11 +197,14 @@ export default async function SharePage({ params }: PageProps) {
           <Link href="/" className="flex min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)">
             <ThemedLogo />
           </Link>
-          {!user && (
-            <Link href="/login" className="rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white">
-              Empieza tu checklist
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell />}
+            {!user && (
+              <Link href="/login" className="rounded-xl bg-(--primary) px-4 py-2 text-sm font-semibold text-white">
+                Empieza tu checklist
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 

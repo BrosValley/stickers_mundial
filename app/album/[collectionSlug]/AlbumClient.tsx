@@ -12,6 +12,7 @@ import { AlbumContextTips, AlbumOnboardingController } from '@/components/album/
 import { ShareModal } from '@/components/share/ShareModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { calcCollectionProgress } from '@/lib/progress'
@@ -31,14 +32,13 @@ interface AlbumClientProps {
   unlockedAchievementCodes: string[]
   mode?: 'authenticated' | 'preview' | 'sandbox'
   continueOnboarding?: boolean
-  pendingExchanges?: number
 }
 
 type FeedbackToast =
   | { id: string; type: 'achievement'; title: string; description: string; icon: string }
   | { id: string; type: 'progress'; title: string; description: string }
 
-export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false, pendingExchanges = 0 }: AlbumClientProps) {
+export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false }: AlbumClientProps) {
   const [stickers, setStickers] = useState(initial)
   const [filter, setFilter] = useState<StickerFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -435,20 +435,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
               />
             </label>
             <div className="flex shrink-0 items-center gap-2">
-              {pendingExchanges > 0 && (
-                <Link
-                  href="/exchanges"
-                  className="relative flex h-12 items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-900/20 px-4 text-sm font-semibold text-amber-300 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
-                >
-                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                  <span>Intercambios</span>
-                  <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black">
-                    {pendingExchanges}
-                  </span>
-                </Link>
-              )}
+              {user && <NotificationBell />}
               <button
                 data-album-tour="share"
                 onClick={handleShare}

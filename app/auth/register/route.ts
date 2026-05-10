@@ -30,14 +30,11 @@ export async function POST(request: NextRequest) {
     return safeError('No se pudo crear la cuenta.', 400)
   }
 
-  const callbackUrl = new URL('/auth/callback', request.nextUrl.origin).toString()
-
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { nickname },
-      emailRedirectTo: callbackUrl,
     },
   })
 

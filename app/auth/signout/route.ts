@@ -1,16 +1,19 @@
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { auditLog } from '@/lib/security/audit'
-import { requireAuthenticatedUser } from '@/lib/security/api'
+import { getClientIp } from '@/lib/security/rate-limit'
 import type { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const route = 'POST /auth/signout'
-  const auth = await requireAuthenticatedUser(request, route)
-  if (auth.error) return auth.error
+  const supabase = await createClient()
 
-  const { supabase, user } = auth
+  const { data: { user } } = await supabase.auth.getUser()
   await supabase.auth.signOut()
-  auditLog('auth.signout', { route, userId: user.id })
+
+  if (user) {
+    auditLog('auth.signout', { route, userId: user.id, ip: getClientIp(request) })
+  }
 
   if (request.headers.get('accept')?.includes('application/json')) {
     return NextResponse.json({ ok: true })

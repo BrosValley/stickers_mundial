@@ -17,7 +17,7 @@ export const endpointRegistry = {
   'GET /auth/callback': 'sensitive-auth-flow',
   'POST /auth/login': 'sensitive-auth-flow',
   'POST /auth/register': 'sensitive-auth-flow',
-  'POST /auth/signout': 'authenticated',
+  'POST /auth/signout': 'public',
 } satisfies Record<string, EndpointClass>
 
 export function safeError(message = 'No se pudo completar la solicitud.', status = 400) {

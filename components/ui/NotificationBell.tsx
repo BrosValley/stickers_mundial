@@ -51,7 +51,7 @@ export function NotificationBell() {
       aria-label={count > 0 ? `${count} intercambio${count !== 1 ? 's' : ''} pendiente${count !== 1 ? 's' : ''}` : 'Mis intercambios'}
       className={`relative flex size-10 items-center justify-center rounded-xl border transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus) ${
         count > 0
-          ? 'border-amber-500/40 bg-amber-900/20 text-amber-300'
+          ? 'border-red-500/40 bg-red-900/20 text-red-300'
           : 'border-(--border) bg-(--surface) text-(--muted) hover:border-(--accent)/50 hover:text-(--text)'
       }`}
     >
@@ -59,7 +59,7 @@ export function NotificationBell() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
       {count > 0 && (
-        <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black">
+        <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
           {count > 9 ? '9+' : count}
         </span>
       )}

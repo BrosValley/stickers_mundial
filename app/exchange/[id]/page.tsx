@@ -58,6 +58,18 @@ export default async function ExchangePage({ params }: PageProps) {
   const ownerGivesStickers = ownerStickers.filter(s => request.owner_gives.includes(s.id))
   const requesterGivesStickers = requesterStickers.filter(s => request.requester_gives.includes(s.id))
 
+  // Stickers que ya no tienen suficientes repetidas (quantity < 2) para completar el intercambio
+  const ownerStickerMap = new Map(ownerStickers.map(s => [s.id, s]))
+  const requesterStickerMap = new Map(requesterStickers.map(s => [s.id, s]))
+  const unavailableOwnerGives = request.owner_gives.filter(id => {
+    const s = ownerStickerMap.get(id)
+    return !s || s.quantity < 2
+  })
+  const unavailableRequesterGives = request.requester_gives.filter(id => {
+    const s = requesterStickerMap.get(id)
+    return !s || s.quantity < 2
+  })
+
   const ownerName = ownerNickname ? `@${ownerNickname}` : 'El dueño'
   const requesterName = requesterNickname ? `@${requesterNickname}` : 'El solicitante'
 
@@ -70,6 +82,8 @@ export default async function ExchangePage({ params }: PageProps) {
       ownerName={ownerName}
       ownerGives={ownerGivesStickers}
       requesterGives={requesterGivesStickers}
+      unavailableOwnerGives={unavailableOwnerGives}
+      unavailableRequesterGives={unavailableRequesterGives}
       countries={countries}
       shareToken={request.share_token}
     />

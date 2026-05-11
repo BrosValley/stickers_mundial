@@ -69,6 +69,7 @@ export function ExchangeDetailClient({
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Ocurrió un error')
         setAction(null)
+        router.refresh()
       }
     })
   }

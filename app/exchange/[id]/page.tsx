@@ -52,8 +52,13 @@ export default async function ExchangePage({ params }: PageProps) {
       .eq('collection_id', request.collection_id),
   ])
 
-  const ownerStickers = mergeStickersWithQuantity(stickers, (ownerUserStickersResult.data ?? []) as UserSticker[])
-  const requesterStickers = mergeStickersWithQuantity(stickers, (requesterUserStickersResult.data ?? []) as UserSticker[])
+  const ownerStickerRows = (ownerUserStickersResult.data ?? []) as UserSticker[]
+  const requesterStickerRows = (requesterUserStickersResult.data ?? []) as UserSticker[]
+  const ownerQuantitiesReadable = ownerStickerRows.length > 0 || request.owner_gives.length === 0
+  const requesterQuantitiesReadable = requesterStickerRows.length > 0 || request.requester_gives.length === 0
+
+  const ownerStickers = mergeStickersWithQuantity(stickers, ownerStickerRows)
+  const requesterStickers = mergeStickersWithQuantity(stickers, requesterStickerRows)
 
   const ownerGivesStickers = ownerStickers.filter(s => request.owner_gives.includes(s.id))
   const requesterGivesStickers = requesterStickers.filter(s => request.requester_gives.includes(s.id))
@@ -62,10 +67,12 @@ export default async function ExchangePage({ params }: PageProps) {
   const ownerStickerMap = new Map(ownerStickers.map(s => [s.id, s]))
   const requesterStickerMap = new Map(requesterStickers.map(s => [s.id, s]))
   const unavailableOwnerGives = request.owner_gives.filter(id => {
+    if (!ownerQuantitiesReadable) return false
     const s = ownerStickerMap.get(id)
     return !s || s.quantity < 2
   })
   const unavailableRequesterGives = request.requester_gives.filter(id => {
+    if (!requesterQuantitiesReadable) return false
     const s = requesterStickerMap.get(id)
     return !s || s.quantity < 2
   })

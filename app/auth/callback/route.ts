@@ -30,9 +30,15 @@ export async function GET(request: NextRequest) {
   const rateLimit = enforceRateLimit(request, route, rateLimitRules.auth)
   if (rateLimit) return rateLimit
 
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const next = sanitizeRedirectPath(searchParams.get('next'))
+
+  // In PM2/nginx setups request.url contains the internal host (localhost:3000).
+  // Reconstruct the public origin from forwarded headers set by the reverse proxy.
+  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? new URL(request.url).host
+  const origin = `${proto}://${host}`
 
   const supabase = await createClient()
 

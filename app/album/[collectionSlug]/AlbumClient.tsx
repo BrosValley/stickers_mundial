@@ -386,7 +386,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
           </span>
         )}
 
-        {!canPersist && (
+        {isSandbox && (
           <div data-album-tour="mode-banner" className="rounded-3xl border border-(--accent)/30 bg-(--accent)/10 p-4 text-sm text-(--text) shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>

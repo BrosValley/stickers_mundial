@@ -32,8 +32,24 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
 ]
 
 const ACHIEVEMENT_MAP = new Map(ACHIEVEMENTS.map(achievement => [achievement.code, achievement]))
+const COLLECTION_ACHIEVEMENT_EXCLUSIONS: Record<string, Set<string>> = {
+  'prizm-monopoly-2026': new Set(['first_team_completed', 'first_group_completed']),
+}
 
-export function getAchievementDefinition(code: string): AchievementDefinition | null {
+export function getAchievementsForCollection(collectionSlug?: string | null): AchievementDefinition[] {
+  if (!collectionSlug) return ACHIEVEMENTS
+
+  const excludedCodes = COLLECTION_ACHIEVEMENT_EXCLUSIONS[collectionSlug]
+  if (!excludedCodes) return ACHIEVEMENTS
+
+  return ACHIEVEMENTS.filter(achievement => !excludedCodes.has(achievement.code))
+}
+
+export function getAchievementDefinition(code: string, collectionSlug?: string | null): AchievementDefinition | null {
+  if (collectionSlug) {
+    return getAchievementsForCollection(collectionSlug).find(achievement => achievement.code === code) ?? null
+  }
+
   return ACHIEVEMENT_MAP.get(code) ?? null
 }
 
@@ -67,6 +83,7 @@ export function detectAchievementCodes({
   groups,
   changedSticker,
   unlockedCodes,
+  collectionSlug,
 }: {
   previous: StickerWithQuantity[]
   next: StickerWithQuantity[]
@@ -74,8 +91,10 @@ export function detectAchievementCodes({
   groups: Group[]
   changedSticker: StickerWithQuantity
   unlockedCodes: Set<string>
+  collectionSlug?: string | null
 }): string[] {
   const codes = new Set<string>()
+  const availableCodes = new Set(getAchievementsForCollection(collectionSlug).map(achievement => achievement.code))
   const previousObtained = previous.filter(sticker => sticker.quantity >= 1).length
   const nextObtained = next.filter(sticker => sticker.quantity >= 1).length
   const previousPercentage = percentage(previous)
@@ -99,7 +118,7 @@ export function detectAchievementCodes({
     codes.add('market_open')
   }
 
-  return Array.from(codes).filter(code => !unlockedCodes.has(code))
+  return Array.from(codes).filter(code => availableCodes.has(code) && !unlockedCodes.has(code))
 }
 
 export function detectExistingAchievements({
@@ -107,13 +126,16 @@ export function detectExistingAchievements({
   countries,
   groups,
   unlockedCodes,
+  collectionSlug,
 }: {
   stickers: StickerWithQuantity[]
   countries: Country[]
   groups: Group[]
   unlockedCodes: Set<string>
+  collectionSlug?: string | null
 }): string[] {
   const codes = new Set<string>()
+  const availableCodes = new Set(getAchievementsForCollection(collectionSlug).map(achievement => achievement.code))
   const obtained = stickers.filter(s => s.quantity >= 1).length
   const pct = percentage(stickers)
   const hasDuplicate = stickers.some(s => s.quantity > 1)
@@ -128,13 +150,14 @@ export function detectExistingAchievements({
   if (completedGroupCount(stickers, countries, groups) >= 1) codes.add('first_group_completed')
   if (hasDuplicate) { codes.add('first_duplicate'); codes.add('market_open') }
 
-  return Array.from(codes).filter(code => !unlockedCodes.has(code))
+  return Array.from(codes).filter(code => availableCodes.has(code) && !unlockedCodes.has(code))
 }
 
 export async function unlockAchievements(
   userId: string,
   collectionId: string,
-  codes: string[]
+  codes: string[],
+  collectionSlug?: string | null
 ): Promise<AchievementDefinition[]> {
   if (codes.length === 0) return []
   const supabase = createClient()
@@ -154,6 +177,6 @@ export async function unlockAchievements(
   const insertedCodes = new Set((data ?? []).map((row: { achievement_code: string }) => row.achievement_code))
   return codes
     .filter(code => insertedCodes.has(code))
-    .map(code => getAchievementDefinition(code))
+    .map(code => getAchievementDefinition(code, collectionSlug))
     .filter((achievement): achievement is AchievementDefinition => Boolean(achievement))
 }

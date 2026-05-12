@@ -152,10 +152,10 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     if (initialCheckDone.current) return
     initialCheckDone.current = true
 
-    const existing = detectExistingAchievements({ stickers: initial, countries, groups, unlockedCodes })
+    const existing = detectExistingAchievements({ stickers: initial, countries, groups, unlockedCodes, collectionSlug: collection.slug })
     if (existing.length === 0) return
 
-    unlockAchievements(user.id, collection.id, existing).then(newAchievements => {
+    unlockAchievements(user.id, collection.id, existing, collection.slug).then(newAchievements => {
       if (newAchievements.length === 0) return
       fireConfetti()
       setUnlockedCodes(prev => {
@@ -258,6 +258,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       groups,
       changedSticker: current,
       unlockedCodes,
+      collectionSlug: collection.slug,
     })
 
     setStickers(nextStickers)
@@ -278,7 +279,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
 
     try {
       await updateStickerQuantity(user.id, collection.id, stickerId, newQty)
-      const newAchievements = await unlockAchievements(user.id, collection.id, candidateAchievementCodes)
+      const newAchievements = await unlockAchievements(user.id, collection.id, candidateAchievementCodes, collection.slug)
       if (progressToasts.length > 0 || newAchievements.length > 0) fireConfetti()
       if (newAchievements.length > 0) {
         setUnlockedCodes(prev => {
@@ -301,7 +302,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     } finally {
       setUpdatingIds(prev => { const next = new Set(prev); next.delete(stickerId); return next })
     }
-  }, [addFeedbackToasts, canPersist, collection.id, countries, fireConfetti, groups, isSandbox, sections, stickers, unlockedCodes, user])
+  }, [addFeedbackToasts, canPersist, collection.id, collection.slug, countries, fireConfetti, groups, isSandbox, sections, stickers, unlockedCodes, user])
 
   const handleShareModalClose = useCallback(() => {
     shareJustClosedRef.current = true

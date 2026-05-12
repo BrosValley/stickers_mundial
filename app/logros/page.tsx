@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCollections } from '@/lib/collections'
-import { ACHIEVEMENTS } from '@/lib/achievements'
+import { getAchievementsForCollection } from '@/lib/achievements'
 import { loginPathForRedirect, sanitizeRedirectPath } from '@/lib/auth-redirect'
 import { AchievementsAccordion } from '@/components/progress/AchievementsAccordion'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -46,18 +46,19 @@ export default async function LogrosPage({ searchParams }: PageProps) {
   }
 
   const collectionItems = collections.map(collection => {
+    const availableAchievements = getAchievementsForCollection(collection.slug)
     const unlockedMap = unlockedByCollection.get(collection.id) ?? new Map<string, string>()
-    const unlockedCount = ACHIEVEMENTS.filter(achievement => unlockedMap.has(achievement.code)).length
-    const progressPercentage = ACHIEVEMENTS.length > 0 ? Math.round((unlockedCount / ACHIEVEMENTS.length) * 100) : 0
+    const unlockedCount = availableAchievements.filter(achievement => unlockedMap.has(achievement.code)).length
+    const progressPercentage = availableAchievements.length > 0 ? Math.round((unlockedCount / availableAchievements.length) * 100) : 0
 
     return {
       id: collection.id,
       slug: collection.slug,
       name: collection.name,
       unlockedCount,
-      totalCount: ACHIEVEMENTS.length,
+      totalCount: availableAchievements.length,
       progressPercentage,
-      achievements: ACHIEVEMENTS.map(achievement => ({
+      achievements: availableAchievements.map(achievement => ({
         code: achievement.code,
         name: achievement.name,
         description: achievement.description,

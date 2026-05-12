@@ -409,17 +409,6 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
         </div>
 
         <section data-album-tour="tools" className="rounded-3xl border border-(--border) bg-(--surface)/80 p-3 shadow-sm backdrop-blur sm:p-4">
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-(--muted)">
-            <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1">
-              {visibleCountries.length} países visibles
-            </span>
-            {sectionCount > 0 && (
-              <span className="rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1">
-                {sectionCount} secciones
-              </span>
-            )}
-          </div>
-
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <label className="relative flex-1">
               <span className="sr-only">Buscar elementos</span>

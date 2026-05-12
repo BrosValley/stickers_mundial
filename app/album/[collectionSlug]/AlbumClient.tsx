@@ -613,10 +613,20 @@ function FeedbackStack({ toasts, onDismiss }: { toasts: FeedbackToast[]; onDismi
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className="animate-[toast-in_180ms_ease-out] rounded-2xl border border-(--accent)/30 bg-(--surface) p-4 text-(--text) shadow-2xl shadow-black/15 ring-1 ring-(--accent)/10 transition duration-200"
+          className="animate-[toast-in_180ms_ease-out] rounded-2xl border bg-(--surface) p-4 text-(--text) transition duration-200"
+          style={{
+            borderColor: 'var(--sticker-repeated-border)',
+            boxShadow: '0 24px 48px var(--sticker-repeated-shadow), 0 0 0 1px var(--sticker-repeated-bg)',
+          }}
         >
           <div className="flex items-start gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-(--accent)/15 text-(--accent)">
+            <div
+              className="grid size-10 shrink-0 place-items-center rounded-2xl"
+              style={{
+                backgroundColor: 'var(--sticker-repeated-bg)',
+                color: 'var(--sticker-repeated-text)',
+              }}
+            >
               {toast.type === 'achievement' ? <AchievementIcon icon={toast.icon} /> : (
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -625,12 +635,16 @@ function FeedbackStack({ toasts, onDismiss }: { toasts: FeedbackToast[]; onDismi
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-(--text)">{toast.type === 'achievement' ? 'Logro desbloqueado' : toast.title}</p>
-              <p className="mt-0.5 text-sm font-semibold text-(--accent)">{toast.type === 'achievement' ? toast.title : toast.description}</p>
+              <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--sticker-repeated-text)' }}>{toast.type === 'achievement' ? toast.title : toast.description}</p>
               {toast.type === 'achievement' && <p className="mt-1 text-xs leading-5 text-(--muted)">{toast.description}</p>}
             </div>
             <button
               onClick={() => onDismiss(toast.id)}
-              className="grid size-7 shrink-0 place-items-center rounded-full text-(--muted) transition hover:bg-(--surface-soft) hover:text-(--text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--focus)"
+              className="grid size-7 shrink-0 place-items-center rounded-full transition focus-visible:outline-none focus-visible:ring-2"
+              style={{
+                color: 'var(--sticker-repeated-text)',
+                outlineColor: 'var(--sticker-repeated-border)',
+              }}
               aria-label="Cerrar notificación"
             >
               ×

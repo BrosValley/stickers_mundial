@@ -15,7 +15,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
 import { LogoutButton } from '@/components/auth/LogoutButton'
-import { calcCollectionProgress } from '@/lib/progress'
+import { calcCollectionProgress, filterStickers, searchStickers } from '@/lib/progress'
 import { updateStickerQuantity, MIN_QUANTITY, MAX_QUANTITY } from '@/lib/stickers'
 import { getOrCreateShareLink, getShareUrl } from '@/lib/share'
 import { detectAchievementCodes, detectExistingAchievements, unlockAchievements, type AchievementDefinition } from '@/lib/achievements'
@@ -58,11 +58,13 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
   const displayNickname = user?.nickname ? `@${user.nickname}` : null
 
   const progress = useMemo(() => calcCollectionProgress(stickers, countries), [stickers, countries])
+  const hasSearchQuery = searchQuery.trim().length > 0
+  const hasActiveRefinements = Boolean(selectedGroupId) || filter !== 'all' || hasSearchQuery
 
   const visibleCountries = useMemo(() => {
     let result = countries
     if (selectedGroupId) result = result.filter(c => c.group_id === selectedGroupId)
-    if (searchQuery.trim()) {
+    if (hasSearchQuery) {
       const q = searchQuery.toLowerCase()
       result = result.filter(c =>
         c.name.toLowerCase().includes(q) ||
@@ -74,7 +76,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       )
     }
     return result
-  }, [countries, selectedGroupId, searchQuery, stickers])
+  }, [countries, selectedGroupId, hasSearchQuery, searchQuery, stickers])
 
   const countryStickersMap = useMemo(() => {
     const map = new Map<string, StickerWithQuantity[]>()
@@ -102,6 +104,29 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
 
   const firstSections = useMemo(() => sections.filter(s => s.sort_order < 1), [sections])
   const lastSections = useMemo(() => sections.filter(s => s.sort_order > 12), [sections])
+
+  const visibleCountryCardsCount = useMemo(() => {
+    return visibleCountries.filter(country => {
+      if (filter === 'all') return true
+      const countryStickers = countryStickersMap.get(country.id) ?? []
+      return searchStickers(filterStickers(countryStickers, filter), searchQuery).length > 0
+    }).length
+  }, [visibleCountries, countryStickersMap, filter, searchQuery])
+
+  const visibleStandaloneSectionsCount = useMemo(() => {
+    if (selectedGroupId) return 0
+
+    return [...firstSections, ...lastSections].filter(section => {
+      if (!hasActiveRefinements) return true
+      const sectionStickers = sectionStickersMap.get(section.id) ?? []
+      return searchStickers(filterStickers(sectionStickers, filter), searchQuery).length > 0
+    }).length
+  }, [selectedGroupId, firstSections, lastSections, hasActiveRefinements, sectionStickersMap, filter, searchQuery])
+
+  const shouldShowEmptyState =
+    hasActiveRefinements &&
+    visibleCountryCardsCount === 0 &&
+    visibleStandaloneSectionsCount === 0
 
   const dismissToast = useCallback((toastId: string) => {
     setFeedbackToasts(prev => prev.filter(toast => toast.id !== toastId))
@@ -306,8 +331,6 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     }
   }, [collection.id, isSandbox, user])
 
-  const sectionCount = sections.length
-
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_15%_0%,var(--hero-glow),transparent_32%),radial-gradient(circle_at_90%_10%,var(--hero-glow-secondary),transparent_28%)]" />
@@ -462,7 +485,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
             />
           ))}
 
-          {visibleCountries.length === 0 ? (
+          {shouldShowEmptyState ? (
             <EmptyState
               title="Sin resultados"
               description="Ajusta la búsqueda o cambia el filtro para ver más elementos."

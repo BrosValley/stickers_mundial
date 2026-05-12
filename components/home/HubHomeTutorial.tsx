@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { hasSeenHubHomeTutorial, markHubHomeTutorialAsSeen, setHubHomeTutorialActive } from '@/lib/hub-home-tutorial'
+import { markHubHomeTutorialAsSeen, setHubHomeTutorialActive } from '@/lib/hub-home-tutorial'
 import { TourProvider, useTour } from '@/components/tour/TourProvider'
 import type { TourStep } from '@/components/tour/types'
 
@@ -86,29 +86,15 @@ function HubHomeTutorialLauncher({ userId, initialSeen }: HubHomeTutorialControl
   useEffect(() => {
     if (autoOpenChecked.current) return
     autoOpenChecked.current = true
-    let cancelled = false
 
-    async function checkSeen() {
-      if (searchParams.get('onboarding') === 'home') {
-        const requestedStep = Number(searchParams.get('step') ?? hubHomeTutorialSteps.length - 1)
-        const stepIndex = Number.isFinite(requestedStep)
-          ? Math.min(Math.max(requestedStep, 0), hubHomeTutorialSteps.length - 1)
-          : hubHomeTutorialSteps.length - 1
-        setHubHomeTutorialActive(true)
-        start({ manual: true, index: stepIndex })
-        return
-      }
-
-      const seen = initialSeen === true ? true : await hasSeenHubHomeTutorial(userId)
-      if (!cancelled && !seen) {
-        setHubHomeTutorialActive(true)
-        start()
-      }
-    }
-
-    checkSeen()
-    return () => {
-      cancelled = true
+    if (searchParams.get('onboarding') === 'home') {
+      const requestedStep = Number(searchParams.get('step') ?? hubHomeTutorialSteps.length - 1)
+      const stepIndex = Number.isFinite(requestedStep)
+        ? Math.min(Math.max(requestedStep, 0), hubHomeTutorialSteps.length - 1)
+        : hubHomeTutorialSteps.length - 1
+      setHubHomeTutorialActive(true)
+      start({ manual: true, index: stepIndex })
+      return
     }
   }, [initialSeen, searchParams, start, userId])
 

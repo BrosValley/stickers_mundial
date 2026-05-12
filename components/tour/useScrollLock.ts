@@ -16,6 +16,16 @@ export function useScrollLock(active: boolean) {
       target instanceof HTMLElement && Boolean(target.closest('[data-tour-card="true"]'))
     )
 
+    const isEditableTarget = (target: EventTarget | null) => (
+      target instanceof HTMLElement
+      && (
+        target instanceof HTMLInputElement
+        || target instanceof HTMLTextAreaElement
+        || target.isContentEditable
+        || target.closest('[contenteditable="true"]') !== null
+      )
+    )
+
     const allowProgrammaticScroll = (event: Event) => {
       const duration = event instanceof CustomEvent ? Number(event.detail?.duration ?? 900) : 900
       allowProgrammaticUntil = Date.now() + duration
@@ -29,8 +39,11 @@ export function useScrollLock(active: boolean) {
 
     const preventPageScrollKeys = (event: KeyboardEvent) => {
       if (Date.now() <= allowProgrammaticUntil) return
+      if (event.defaultPrevented) return
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return
       if (![' ', 'PageDown', 'PageUp', 'Home', 'End', 'ArrowDown', 'ArrowUp'].includes(event.key)) return
       if (isInsideTourCard(event.target)) return
+      if (isEditableTarget(event.target)) return
       event.preventDefault()
     }
 

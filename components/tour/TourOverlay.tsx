@@ -77,6 +77,16 @@ export function TourOverlay({ tourId, open, steps, index, onIndexChange, onClose
   useEffect(() => {
     if (!open) return
     const handleKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return
+      if (
+        event.target instanceof HTMLInputElement
+        || event.target instanceof HTMLTextAreaElement
+        || (event.target instanceof HTMLElement && event.target.isContentEditable)
+      ) {
+        return
+      }
+
       if (event.key === 'Escape') {
         onClose()
         track('tutorial_closed', { tourId, stepId: step?.id, stepIndex: index, reason: 'escape' })

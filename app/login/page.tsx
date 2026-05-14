@@ -125,10 +125,7 @@ export default function LoginPage() {
             </p>
           </div>
           <div className="rounded-3xl border border-(--border) bg-(--surface)/90 p-5 shadow-sm backdrop-blur sm:p-8">
-            <h2 className="mb-6 text-center text-sm font-semibold uppercase tracking-wide text-(--accent)">
-              {mode === 'login' ? 'Acceso seguro' : 'Registro'}
-            </h2>
-
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="email"

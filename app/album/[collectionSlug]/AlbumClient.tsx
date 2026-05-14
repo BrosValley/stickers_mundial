@@ -35,7 +35,7 @@ interface AlbumClientProps {
 }
 
 type FeedbackToast =
-  | { id: string; type: 'achievement'; title: string; description: string; icon: string }
+  | { id: string; type: 'achievement'; title: string; description: string; category: string }
   | { id: string; type: 'progress'; title: string; description: string }
 
 export function AlbumClient({ user, collection, groups, countries, sections, stickersWithQuantity: initial, unlockedAchievementCodes, mode = user ? 'authenticated' : 'preview', continueOnboarding = false }: AlbumClientProps) {
@@ -152,7 +152,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
     if (initialCheckDone.current) return
     initialCheckDone.current = true
 
-    const existing = detectExistingAchievements({ stickers: initial, countries, groups, unlockedCodes, collectionSlug: collection.slug })
+    const existing = detectExistingAchievements({ stickers: initial, countries, groups, sections, unlockedCodes, collectionSlug: collection.slug })
     if (existing.length === 0) return
 
     unlockAchievements(user.id, collection.id, existing, collection.slug).then(newAchievements => {
@@ -165,7 +165,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       })
       newAchievements.forEach((achievement: AchievementDefinition, i) => {
         window.setTimeout(() => {
-          addFeedbackToasts([{ type: 'achievement', title: achievement.name, description: achievement.description, icon: achievement.icon } as Omit<FeedbackToast, 'id'>])
+          addFeedbackToasts([{ type: 'achievement', title: achievement.title, description: achievement.description, category: achievement.category } as Omit<FeedbackToast, 'id'>])
         }, i * 800)
       })
     })
@@ -256,6 +256,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       next: nextStickers,
       countries,
       groups,
+      sections,
       changedSticker: current,
       unlockedCodes,
       collectionSlug: collection.slug,
@@ -291,9 +292,9 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
       addFeedbackToasts([
         ...newAchievements.map((achievement: AchievementDefinition) => ({
           type: 'achievement' as const,
-          title: achievement.name,
+          title: achievement.title,
           description: achievement.description,
-          icon: achievement.icon,
+          category: achievement.category,
         })),
         ...progressToasts,
       ])
@@ -640,7 +641,7 @@ function FeedbackStack({ toasts, onDismiss }: { toasts: FeedbackToast[]; onDismi
                 color: 'var(--sticker-repeated-text)',
               }}
             >
-              {toast.type === 'achievement' ? <AchievementIcon icon={toast.icon} /> : (
+              {toast.type === 'achievement' ? <AchievementIcon icon={toast.category} /> : (
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
@@ -674,6 +675,14 @@ function AchievementIcon({ icon }: { icon: string }) {
     return (
       <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h12v4a6 6 0 11-12 0V4zM8 20h8M12 16v4M18 6h2a2 2 0 010 4h-2M6 6H4a2 2 0 000 4h2" />
+      </svg>
+    )
+  }
+
+  if (icon === 'star') {
+    return (
+      <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
       </svg>
     )
   }

@@ -60,7 +60,7 @@ export default async function LogrosPage({ searchParams }: PageProps) {
       progressPercentage,
       achievements: availableAchievements.map(achievement => ({
         code: achievement.code,
-        name: achievement.name,
+        title: achievement.title,
         description: achievement.description,
         unlockedAt: unlockedMap.get(achievement.code) ?? null,
       })),

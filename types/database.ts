@@ -266,28 +266,25 @@ export interface Database {
       achievements: {
         Row: {
           code: string
-          name: string
+          title: string
           description: string
-          icon: string
+          category: string
           sort_order: number
           created_at: string
-          updated_at: string
         }
         Insert: {
           code: string
-          name: string
+          title: string
           description: string
-          icon: string
+          category: string
           sort_order?: number
           created_at?: string
-          updated_at?: string
         }
         Update: {
-          name?: string
+          title?: string
           description?: string
-          icon?: string
+          category?: string
           sort_order?: number
-          updated_at?: string
         }
       }
       user_achievements: {

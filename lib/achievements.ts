@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Country, Group, StickerWithQuantity } from '@/types/album'
+import type { Country, Group, Section, StickerWithQuantity } from '@/types/album'
 
 export interface AchievementDefinition {
   code: string
-  name: string
+  title: string
   description: string
-  icon: string
+  category: string
   sort_order: number
 }
 
@@ -18,22 +18,23 @@ export interface UserAchievement {
 }
 
 export const ACHIEVEMENTS: AchievementDefinition[] = [
-  { code: 'first_sticker', name: 'Primer sticker', description: 'Marcaste tu primera estampa.', icon: 'sparkles', sort_order: 10 },
-  { code: 'album_5_percent', name: 'Ya empezó la colección', description: 'Completaste el 5% del álbum.', icon: 'progress-5', sort_order: 20 },
-  { code: 'album_25_percent', name: 'Coleccionista constante', description: 'Completaste el 25% del álbum.', icon: 'progress-25', sort_order: 30 },
-  { code: 'album_50_percent', name: 'Medio álbum listo', description: 'Completaste la mitad del álbum.', icon: 'progress-50', sort_order: 40 },
-  { code: 'album_75_percent', name: 'Casi completo', description: 'Completaste el 75% del álbum.', icon: 'progress-75', sort_order: 50 },
-  { code: 'album_complete', name: 'Álbum completo', description: 'Completaste todas las estampas del álbum.', icon: 'trophy', sort_order: 60 },
-  { code: 'last_sticker', name: 'Último sticker', description: 'Conseguiste la estampa que faltaba para cerrar el álbum.', icon: 'flag', sort_order: 70 },
-  { code: 'first_team_completed', name: 'Primer equipo completado', description: 'Completaste tu primer país o equipo.', icon: 'shield', sort_order: 80 },
-  { code: 'first_group_completed', name: 'Primer grupo completado', description: 'Completaste todos los países de un grupo.', icon: 'grid', sort_order: 90 },
-  { code: 'first_duplicate', name: 'Primer repetido', description: 'Registraste tu primer sticker repetido.', icon: 'copy', sort_order: 100 },
-  { code: 'market_open', name: 'Mercado abierto', description: 'Ya tienes repetidas para intercambiar.', icon: 'swap', sort_order: 110 },
+  { code: 'first_sticker', title: 'Primer sticker', description: 'Marcaste tu primera estampa.', category: 'sparkles', sort_order: 10 },
+  { code: 'album_5_percent', title: 'Ya empezó la colección', description: 'Completaste el 5% del álbum.', category: 'progress-5', sort_order: 20 },
+  { code: 'album_25_percent', title: 'Coleccionista constante', description: 'Completaste el 25% del álbum.', category: 'progress-25', sort_order: 30 },
+  { code: 'album_50_percent', title: 'Medio álbum listo', description: 'Completaste la mitad del álbum.', category: 'progress-50', sort_order: 40 },
+  { code: 'album_75_percent', title: 'Casi completo', description: 'Completaste el 75% del álbum.', category: 'progress-75', sort_order: 50 },
+  { code: 'album_complete', title: 'Álbum completo', description: 'Completaste todas las estampas del álbum.', category: 'trophy', sort_order: 60 },
+  { code: 'last_sticker', title: 'Último sticker', description: 'Conseguiste la estampa que faltaba para cerrar el álbum.', category: 'flag', sort_order: 70 },
+  { code: 'first_team_completed', title: 'Primer equipo completado', description: 'Completaste tu primer país o equipo.', category: 'shield', sort_order: 80 },
+  { code: 'first_group_completed', title: 'Primer grupo completado', description: 'Completaste todos los países de un grupo.', category: 'grid', sort_order: 90 },
+  { code: 'first_duplicate', title: 'Primer repetido', description: 'Registraste tu primer sticker repetido.', category: 'copy', sort_order: 100 },
+  { code: 'market_open', title: 'Mercado abierto', description: 'Ya tienes repetidas para intercambiar.', category: 'swap', sort_order: 110 },
+  { code: 'special_complete', title: 'Colección élite', description: 'Conseguiste todas las estampas especiales.', category: 'star', sort_order: 120 },
 ]
 
 const ACHIEVEMENT_MAP = new Map(ACHIEVEMENTS.map(achievement => [achievement.code, achievement]))
 const COLLECTION_ACHIEVEMENT_EXCLUSIONS: Record<string, Set<string>> = {
-  'prizm-monopoly-2026': new Set(['first_team_completed', 'first_group_completed']),
+  'prizm-monopoly-2026': new Set(['first_team_completed', 'first_group_completed', 'special_complete']),
 }
 
 export function getAchievementsForCollection(collectionSlug?: string | null): AchievementDefinition[] {
@@ -66,6 +67,13 @@ function completedCountryCount(stickers: StickerWithQuantity[], countries: Count
   }).length
 }
 
+function allSpecialsCompleted(stickers: StickerWithQuantity[], sections: Section[]): boolean {
+  const specialSectionIds = new Set(sections.filter(s => s.type === 'special').map(s => s.id))
+  if (specialSectionIds.size === 0) return false
+  const specialStickers = stickers.filter(s => s.section_id !== null && specialSectionIds.has(s.section_id))
+  return specialStickers.length > 0 && specialStickers.every(s => s.quantity >= 1)
+}
+
 function completedGroupCount(stickers: StickerWithQuantity[], countries: Country[], groups: Group[]): number {
   return groups.filter(group => {
     const groupCountries = countries.filter(country => country.group_id === group.id)
@@ -81,6 +89,7 @@ export function detectAchievementCodes({
   next,
   countries,
   groups,
+  sections = [],
   changedSticker,
   unlockedCodes,
   collectionSlug,
@@ -89,6 +98,7 @@ export function detectAchievementCodes({
   next: StickerWithQuantity[]
   countries: Country[]
   groups: Group[]
+  sections?: Section[]
   changedSticker: StickerWithQuantity
   unlockedCodes: Set<string>
   collectionSlug?: string | null
@@ -117,6 +127,7 @@ export function detectAchievementCodes({
     codes.add('first_duplicate')
     codes.add('market_open')
   }
+  if (!allSpecialsCompleted(previous, sections) && allSpecialsCompleted(next, sections)) codes.add('special_complete')
 
   return Array.from(codes).filter(code => availableCodes.has(code) && !unlockedCodes.has(code))
 }
@@ -125,12 +136,14 @@ export function detectExistingAchievements({
   stickers,
   countries,
   groups,
+  sections = [],
   unlockedCodes,
   collectionSlug,
 }: {
   stickers: StickerWithQuantity[]
   countries: Country[]
   groups: Group[]
+  sections?: Section[]
   unlockedCodes: Set<string>
   collectionSlug?: string | null
 }): string[] {
@@ -149,6 +162,7 @@ export function detectExistingAchievements({
   if (completedCountryCount(stickers, countries) >= 1) codes.add('first_team_completed')
   if (completedGroupCount(stickers, countries, groups) >= 1) codes.add('first_group_completed')
   if (hasDuplicate) { codes.add('first_duplicate'); codes.add('market_open') }
+  if (allSpecialsCompleted(stickers, sections)) codes.add('special_complete')
 
   return Array.from(codes).filter(code => availableCodes.has(code) && !unlockedCodes.has(code))
 }

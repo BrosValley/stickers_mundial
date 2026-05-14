@@ -464,7 +464,7 @@ export function AlbumClient({ user, collection, groups, countries, sections, sti
           </div>
 
           <div className="mt-4 space-y-3">
-            <FilterBar activeFilter={filter} onChange={setFilter} hideSpecial={Boolean(selectedGroupId)} />
+            <FilterBar activeFilter={filter} onChange={setFilter} hideSpecial={Boolean(selectedGroupId) || !sections.some(s => s.type === 'special')} />
 
             {groups.length > 0 && (
               <GroupNav groups={groups} selectedGroupId={selectedGroupId} onChange={handleGroupChange} />

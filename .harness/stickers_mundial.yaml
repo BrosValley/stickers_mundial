@@ -1,0 +1,122 @@
+pipeline:
+  projectIdentifier: default_project
+  orgIdentifier: default
+  identifier: stickers_mundial
+  name: stickers mundial
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: bvgithub
+        repoName: stickers_mundial
+        build: <+input>
+        sparseCheckout: []
+  # NEXT_PUBLIC_* values are baked into the image at build time (passed as
+  # --build-arg). Edit them here or override at run time.
+  variables:
+    - name: NEXT_PUBLIC_SUPABASE_URL
+      type: String
+      description: ""
+      required: false
+      value: https://kfecdzeyqpzeubatccpu.supabase.co
+    - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      type: String
+      description: ""
+      required: false
+      value: sb_publishable_psGX9jhpgTWknZWbihJe7g_jIyw_ijZ
+    - name: NEXT_PUBLIC_APP_URL
+      type: String
+      description: "Public URL the app is served from in prod"
+      required: false
+      value: http://192.168.0.132:3000
+  stages:
+    - stage:
+        name: Build_deploy
+        identifier: clone
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Docker
+            spec: {}
+          execution:
+            steps:
+              # Docker-in-Docker daemon: lets the build step run `docker build`.
+              - step:
+                  type: Background
+                  name: docker-dind
+                  identifier: docker_dind
+                  spec:
+                    image: docker:27-dind
+                    privileged: true
+                    envVariables:
+                      DOCKER_TLS_CERTDIR: ""
+              # Build the production image and export it as a tarball.
+              - step:
+                  type: Run
+                  name: Build Docker image
+                  identifier: build_image
+                  spec:
+                    image: docker:27
+                    shell: Sh
+                    envVariables:
+                      DOCKER_HOST: tcp://localhost:2375
+                    command: |
+                      set -e
+                      echo "Esperando al daemon de Docker..."
+                      until docker info >/dev/null 2>&1; do sleep 2; done
+
+                      docker build \
+                        --build-arg NEXT_PUBLIC_SUPABASE_URL="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_URL>" \
+                        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_ANON_KEY>" \
+                        --build-arg NEXT_PUBLIC_APP_URL="<+pipeline.variables.NEXT_PUBLIC_APP_URL>" \
+                        -t stickers-mundial:latest .
+
+                      docker save stickers-mundial:latest | gzip > /harness/stickers-image.tar.gz
+                      ls -lh /harness/stickers-image.tar.gz
+              # Ship the tarball to the server, load it and (re)start the container.
+              # No `image:` here on purpose: this reuses the default step image,
+              # which is where your existing SSH credentials already work.
+              - step:
+                  type: Run
+                  name: Deploy to server
+                  identifier: deploy
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      HOST="harness@192.168.0.132"
+
+                      scp -o StrictHostKeyChecking=no /harness/stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
+
+                      ssh -o StrictHostKeyChecking=no $HOST '
+                        set -e
+                        # Instalar Docker si no está presente (igual que el guard de tar)
+                        if ! command -v docker >/dev/null 2>&1; then
+                          echo "Docker no encontrado. Instalando con yum..."
+                          sudo yum install -y docker
+                          sudo systemctl enable --now docker
+                        fi
+
+                        # Cargar la nueva imagen
+                        sudo docker load -i ~/stickers-image.tar.gz
+
+                        # Apagar el proceso PM2 anterior para liberar el puerto 3000
+                        pm2 delete next-app 2>/dev/null || true
+
+                        # Reemplazar el contenedor en ejecución
+                        sudo docker rm -f stickers-mundial 2>/dev/null || true
+                        sudo docker run -d \
+                          --name stickers-mundial \
+                          --restart unless-stopped \
+                          -p 3000:3000 \
+                          stickers-mundial:latest
+
+                        # Limpieza
+                        rm -f ~/stickers-image.tar.gz
+                        sudo docker image prune -f
+                      '

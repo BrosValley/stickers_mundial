@@ -239,8 +239,16 @@ function StickerBlock({
                           : badgeColor
                       }`}
                     >
-                      <span className="text-[10px] opacity-60">{s.code}</span>
-                      {s.name && <span className="font-sans text-[11px] font-semibold leading-tight">{s.name}</span>}
+                      {s.name
+                        ? <span className="font-sans text-[11px] font-semibold leading-tight">{s.name.split('|')[0]}</span>
+                        : <span className="text-[10px]">{s.code}</span>
+                      }
+                      {s.name && (() => {
+                        const parts = s.code.split('-')
+                        return parts.length >= 3
+                          ? <span className="font-mono text-[9px] opacity-60">{parts[parts.length - 1]}</span>
+                          : null
+                      })()}
                     </span>
                   )
                 })}

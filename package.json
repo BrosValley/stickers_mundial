@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/update-sw-version.js && NODE_OPTIONS='--max-old-space-size=4096' next build --webpack",
+    "build": "node scripts/update-sw-version.js && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "eslint"
   },

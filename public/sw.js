@@ -1,4 +1,4 @@
-const CACHE = 'album-v2'
+const CACHE = 'album-1778901490836'
 
 const PRECACHE = ['/']
 

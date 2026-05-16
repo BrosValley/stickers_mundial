@@ -49,7 +49,11 @@ export function MatchClient({ matchResult, ownerName, countries, sections = [], 
   function toggleOwner(id: string) {
     setSelectedFromOwner(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
       return next
     })
   }
@@ -57,7 +61,11 @@ export function MatchClient({ matchResult, ownerName, countries, sections = [], 
   function toggleVisitor(id: string) {
     setSelectedFromVisitor(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
       return next
     })
   }

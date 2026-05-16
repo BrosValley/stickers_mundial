@@ -7,6 +7,7 @@ import { SandboxTutorialAlbumCard } from '@/components/collections/SandboxTutori
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/home/SectionHeader'
 import { HubHomeTutorialController } from '@/components/home/HubHomeTutorial'
+import { ReleaseConsoleInfo } from '@/components/home/ReleaseConsoleInfo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ThemedLogo } from '@/components/ui/ThemedLogo'
@@ -16,6 +17,22 @@ import { HUB_HOME_TUTORIAL_VERSION } from '@/lib/hub-home-tutorial'
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, collectionKeywords } from '@/lib/seo'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { readFileSync } from 'fs'
+import { join } from 'path'
+import packageJson from '@/package.json'
+
+function getReleaseDate() {
+  const explicitReleaseDate = process.env.NEXT_PUBLIC_RELEASE_DATE ?? process.env.RELEASE_DATE
+  if (explicitReleaseDate) return explicitReleaseDate
+
+  try {
+    const sw = readFileSync(join(process.cwd(), 'public', 'sw.js'), 'utf8')
+    const timestamp = sw.match(/const CACHE = 'album-(\d+)'/)?.[1]
+    if (timestamp) return new Date(Number(timestamp)).toISOString()
+  } catch {}
+
+  return 'sin fecha configurada'
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const collections = await getCollections().catch(() => [])
@@ -136,6 +153,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
+      <ReleaseConsoleInfo version={packageJson.version} releaseDate={getReleaseDate()} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

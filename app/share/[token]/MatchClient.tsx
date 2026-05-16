@@ -265,9 +265,17 @@ function SelectableStickerSection({
                     >
                       <span className="flex items-center gap-1">
                         {isSelected && <span className="font-sans text-[10px]">✓</span>}
-                        <span className="text-[10px] opacity-60">{s.code}</span>
+                        {s.name
+                          ? <span className="font-sans text-[11px] font-semibold">{s.name.split('|')[0]}</span>
+                          : <span>{s.code}</span>
+                        }
                       </span>
-                      {s.name && <span className="font-sans text-[11px] font-semibold leading-tight">{s.name}</span>}
+                      {s.name && (() => {
+                        const parts = s.code.split('-')
+                        return parts.length >= 3
+                          ? <span className="font-mono text-[9px] opacity-60">{parts[parts.length - 1]}</span>
+                          : null
+                      })()}
                     </button>
                   )
                 })}

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node -e \"const fs=require('fs'),p='public/sw.js',c=fs.readFileSync(p,'utf8');fs.writeFileSync(p,c.replace(/const CACHE = '[^']+'/,\\\"const CACHE = 'album-\\\"+Date.now()+\\\"'\\\"));\" && NODE_OPTIONS='--max-old-space-size=4096' next build --webpack",
+    "build": "node scripts/update-sw-version.js && NODE_OPTIONS='--max-old-space-size=4096' next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },

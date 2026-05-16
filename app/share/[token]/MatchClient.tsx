@@ -233,7 +233,7 @@ function SelectableStickerSection({
         {onSelectAll && (
           <button
             onClick={onSelectAll}
-            className="rounded-lg border border-(--border) bg-(--surface-soft) px-3 py-1.5 text-xs font-medium text-(--muted) transition hover:border-violet-500/60 hover:bg-violet-500/10 hover:text-violet-400"
+            className="rounded-lg border border-(--border) bg-(--surface-soft) px-3 py-1.5 text-xs font-medium text-(--muted) transition hover:border-violet-500/60 hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400"
           >
             {allSelected ? 'Deseleccionar todas' : 'Seleccionar todas'}
           </button>
@@ -260,7 +260,7 @@ function SelectableStickerSection({
                       className={`inline-flex flex-col items-start gap-0 px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-all ${
                         isSelected
                           ? 'bg-violet-600 text-white border-violet-500 shadow-sm shadow-violet-500/30'
-                          : 'bg-(--surface-soft) text-(--muted) border-(--border) hover:border-violet-500/40 hover:text-(--text)'
+                          : 'bg-(--surface-soft) text-(--muted) border-(--border) hover:border-violet-500/60 hover:text-(--text)'
                       } ${onToggle ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                     >
                       <span className="flex items-center gap-1">

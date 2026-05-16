@@ -45,23 +45,10 @@ pipeline:
             spec: {}
           execution:
             steps:
-              # Docker-in-Docker daemon: lets the build step run `docker build`.
-              - step:
-                  type: Background
-                  name: docker-dind
-                  identifier: docker_dind
-                  spec:
-                    image: docker:27-dind
-                    privileged: true
-                    envVariables:
-                      DOCKER_TLS_CERTDIR: ""
-                    # Listen ONLY on plain TCP. The default dind entrypoint also
-                    # binds /var/run/docker.sock, but that path is already taken
-                    # by the host socket mounted in -> "device or resource busy".
-                    entrypoint:
-                      - dockerd-entrypoint.sh
-                      - --host=tcp://0.0.0.0:2375
               # Build the production image and export it as a tarball.
+              # DinD won't run on this delegate (it can't bind the busy
+              # /var/run/docker.sock). Instead we use the host Docker daemon
+              # directly: its socket is already mounted into the step container.
               - step:
                   type: Run
                   name: Build Docker image
@@ -70,22 +57,10 @@ pipeline:
                     image: docker:27
                     shell: Sh
                     envVariables:
-                      # On Docker build infra each step is a separate container;
-                      # the DinD service is reached by the Background step id.
-                      DOCKER_HOST: tcp://docker_dind:2375
+                      DOCKER_HOST: unix:///var/run/docker.sock
                     command: |
                       set -e
-                      echo "Esperando al daemon de Docker (DOCKER_HOST=$DOCKER_HOST)..."
-                      i=0
-                      until docker info >/dev/null 2>&1; do
-                        i=$((i+1))
-                        if [ "$i" -gt 30 ]; then
-                          echo "ERROR: no se pudo contactar al daemon DinD tras 60s."
-                          exit 1
-                        fi
-                        sleep 2
-                      done
-                      echo "Daemon de Docker disponible."
+                      docker version
 
                       docker build \
                         --build-arg NEXT_PUBLIC_SUPABASE_URL="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_URL>" \
@@ -95,6 +70,9 @@ pipeline:
 
                       docker save stickers-mundial:latest | gzip > /harness/stickers-image.tar.gz
                       ls -lh /harness/stickers-image.tar.gz
+
+                      # No dejar la imagen en el daemon del delegate (solo etiqueta).
+                      docker image rm stickers-mundial:latest || true
               # Ship the tarball to the server, load it and (re)start the container.
               # No `image:` here on purpose: this reuses the default step image,
               # which is where your existing SSH credentials already work.

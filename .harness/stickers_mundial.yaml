@@ -68,8 +68,9 @@ pipeline:
                         --build-arg NEXT_PUBLIC_APP_URL="<+pipeline.variables.NEXT_PUBLIC_APP_URL>" \
                         -t stickers-mundial:latest .
 
-                      docker save stickers-mundial:latest | gzip > /harness/stickers-image.tar.gz
-                      ls -lh /harness/stickers-image.tar.gz
+                      # Escribir en el workspace compartido (CWD), no en /harness.
+                      docker save stickers-mundial:latest | gzip > stickers-image.tar.gz
+                      ls -lh stickers-image.tar.gz
 
                       # No dejar la imagen en el daemon del delegate (solo etiqueta).
                       docker image rm stickers-mundial:latest || true
@@ -86,7 +87,7 @@ pipeline:
                       set -e
                       HOST="harness@192.168.0.132"
 
-                      scp -o StrictHostKeyChecking=no /harness/stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
+                      scp -o StrictHostKeyChecking=no stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
 
                       ssh -o StrictHostKeyChecking=no $HOST '
                         set -e

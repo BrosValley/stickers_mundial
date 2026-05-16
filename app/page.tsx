@@ -14,25 +14,10 @@ import { ThemedLogo } from '@/components/ui/ThemedLogo'
 import { ResponsiveMenu } from '@/components/ui/ResponsiveMenu'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { HUB_HOME_TUTORIAL_VERSION } from '@/lib/hub-home-tutorial'
+import { getReleaseInfo } from '@/lib/release-info'
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, collectionKeywords } from '@/lib/seo'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-import packageJson from '@/package.json'
-
-function getReleaseDate() {
-  const explicitReleaseDate = process.env.NEXT_PUBLIC_RELEASE_DATE ?? process.env.RELEASE_DATE
-  if (explicitReleaseDate) return explicitReleaseDate
-
-  try {
-    const sw = readFileSync(join(process.cwd(), 'public', 'sw.js'), 'utf8')
-    const timestamp = sw.match(/const CACHE = 'album-(\d+)'/)?.[1]
-    if (timestamp) return new Date(Number(timestamp)).toISOString()
-  } catch {}
-
-  return 'sin fecha configurada'
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const collections = await getCollections().catch(() => [])
@@ -111,6 +96,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const shouldMountSandboxTutorialCard = isHomeOnboarding || !hasSeenHubTutorial
   const shouldShowSandboxTutorialCard = isHomeOnboarding
   const hasLibraryContent = albumItems.length > 0 || shouldMountSandboxTutorialCard
+  const releaseInfo = getReleaseInfo()
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -153,7 +139,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--text)">
-      <ReleaseConsoleInfo version={packageJson.version} releaseDate={getReleaseDate()} />
+      <ReleaseConsoleInfo {...releaseInfo} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

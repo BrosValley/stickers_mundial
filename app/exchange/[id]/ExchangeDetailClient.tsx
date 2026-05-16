@@ -73,10 +73,10 @@ export function ExchangeDetailClient({
   }
 
   const statusLabel: Record<ExchangeStatus, { text: string; color: string }> = {
-    pending:   { text: 'Pendiente',  color: 'text-amber-700 bg-amber-100 border-amber-300 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-500/30' },
-    accepted:  { text: 'Aceptado',   color: 'text-green-700 bg-green-100 border-green-300 dark:text-green-400 dark:bg-green-900/20 dark:border-green-500/30' },
-    rejected:  { text: 'Rechazado',  color: 'text-red-700 bg-red-100 border-red-300 dark:text-red-400 dark:bg-red-900/20 dark:border-red-500/30' },
-    cancelled: { text: 'Cancelado',  color: 'text-slate-600 bg-slate-100 border-slate-300 dark:text-slate-400 dark:bg-slate-900/20 dark:border-slate-500/30' },
+    pending:   { text: 'Pendiente',  color: 'text-white bg-amber-500 border-amber-500' },
+    accepted:  { text: 'Aceptado',   color: 'text-white bg-green-600 border-green-600' },
+    rejected:  { text: 'Rechazado',  color: 'text-white bg-red-600 border-red-600' },
+    cancelled: { text: 'Cancelado',  color: 'text-white bg-slate-500 border-slate-500' },
   }
 
   const { text: statusText, color: statusColor } = statusLabel[status]

@@ -1,4 +1,4 @@
-const CACHE = 'album-v1'
+const CACHE = 'album-v2'
 
 const PRECACHE = ['/']
 
@@ -34,10 +34,12 @@ self.addEventListener('fetch', (event) => {
         (cached) =>
           cached ||
           fetch(request).then((res) => {
-            const clone = res.clone()
-            caches.open(CACHE).then((c) => c.put(request, clone))
+            if (res.ok) {
+              const clone = res.clone()
+              caches.open(CACHE).then((c) => c.put(request, clone))
+            }
             return res
-          })
+          }).catch(() => new Response('', { status: 408 }))
       )
     )
     return
@@ -48,8 +50,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          const clone = res.clone()
-          caches.open(CACHE).then((c) => c.put(request, clone))
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE).then((c) => c.put(request, clone))
+          }
           return res
         })
         .catch(() =>
@@ -64,9 +68,9 @@ self.addEventListener('fetch', (event) => {
     caches.open(CACHE).then((cache) =>
       cache.match(request).then((cached) => {
         const fresh = fetch(request).then((res) => {
-          cache.put(request, res.clone())
+          if (res.ok) cache.put(request, res.clone())
           return res
-        })
+        }).catch(() => null)
         return cached || fresh
       })
     )

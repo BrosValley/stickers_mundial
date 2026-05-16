@@ -257,14 +257,17 @@ function SelectableStickerSection({
                       key={s.id}
                       onClick={() => onToggle?.(s.id)}
                       disabled={!onToggle}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-all ${
+                      className={`inline-flex flex-col items-start gap-0 px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-all ${
                         isSelected
                           ? 'bg-violet-600 text-white border-violet-500 shadow-sm shadow-violet-500/30'
                           : 'bg-(--surface-soft) text-(--muted) border-(--border) hover:border-violet-500/40 hover:text-(--text)'
                       } ${onToggle ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                     >
-                      {isSelected && <span className="font-sans text-[10px]">✓</span>}
-                      {s.code}
+                      <span className="flex items-center gap-1">
+                        {isSelected && <span className="font-sans text-[10px]">✓</span>}
+                        <span className="text-[10px] opacity-60">{s.code}</span>
+                      </span>
+                      {s.name && <span className="font-sans text-[11px] font-semibold leading-tight">{s.name}</span>}
                     </button>
                   )
                 })}

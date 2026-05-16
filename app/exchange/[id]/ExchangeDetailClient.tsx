@@ -38,7 +38,6 @@ export function ExchangeDetailClient({
   const [isPending, startTransition] = useTransition()
   const [action, setAction] = useState<'accept' | 'reject' | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
 
   const countryMap = new Map(countries.map(c => [c.id, c]))
   const unavailableOwnerSet = new Set(unavailableOwnerGives)
@@ -64,8 +63,7 @@ export function ExchangeDetailClient({
         if (type === 'accept') await acceptExchange(exchangeId)
         else if (type === 'reject') await rejectExchange(exchangeId)
         else await cancelExchange(exchangeId)
-        setDone(true)
-        router.refresh()
+        router.push('/exchanges')
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Ocurrió un error')
         setAction(null)
@@ -133,13 +131,6 @@ export function ExchangeDetailClient({
           </div>
         )}
 
-        {done && status === 'pending' && (
-          <div className="rounded-2xl border border-green-500/30 bg-green-900/20 p-4 text-sm text-green-300">
-            {action === 'accept' ? '¡Intercambio realizado! Los álbumes de ambos han sido actualizados.' :
-             action === 'reject' ? 'Propuesta rechazada.' : 'Propuesta cancelada.'}
-          </div>
-        )}
-
         {/* Lo que recibirá el solicitante (ownerGives) */}
         <StickerBlock
           title={isOwner
@@ -167,7 +158,7 @@ export function ExchangeDetailClient({
         />
 
         {/* Acciones */}
-        {status === 'pending' && !done && (
+        {status === 'pending' && (
           <div className="space-y-3">
             {error && <p className="text-sm text-red-400">{error}</p>}
             {isOwner ? (
@@ -242,13 +233,14 @@ function StickerBlock({
                     <span
                       key={s.id}
                       title={unavailable ? 'Ya no disponible como repetida' : undefined}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border ${
+                      className={`inline-flex flex-col items-start gap-0 px-2 py-1 rounded text-xs font-mono border ${
                         unavailable
                           ? 'bg-red-900/40 text-red-400 border-red-500/40 line-through opacity-70'
                           : badgeColor
                       }`}
                     >
-                      {s.code}
+                      <span className="text-[10px] opacity-60">{s.code}</span>
+                      {s.name && <span className="font-sans text-[11px] font-semibold leading-tight">{s.name}</span>}
                     </span>
                   )
                 })}

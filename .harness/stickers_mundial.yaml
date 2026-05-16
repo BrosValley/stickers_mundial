@@ -55,6 +55,12 @@ pipeline:
                     privileged: true
                     envVariables:
                       DOCKER_TLS_CERTDIR: ""
+                    # Listen ONLY on plain TCP. The default dind entrypoint also
+                    # binds /var/run/docker.sock, but that path is already taken
+                    # by the host socket mounted in -> "device or resource busy".
+                    entrypoint:
+                      - dockerd-entrypoint.sh
+                      - --host=tcp://0.0.0.0:2375
               # Build the production image and export it as a tarball.
               - step:
                   type: Run
@@ -64,11 +70,22 @@ pipeline:
                     image: docker:27
                     shell: Sh
                     envVariables:
-                      DOCKER_HOST: tcp://localhost:2375
+                      # On Docker build infra each step is a separate container;
+                      # the DinD service is reached by the Background step id.
+                      DOCKER_HOST: tcp://docker_dind:2375
                     command: |
                       set -e
-                      echo "Esperando al daemon de Docker..."
-                      until docker info >/dev/null 2>&1; do sleep 2; done
+                      echo "Esperando al daemon de Docker (DOCKER_HOST=$DOCKER_HOST)..."
+                      i=0
+                      until docker info >/dev/null 2>&1; do
+                        i=$((i+1))
+                        if [ "$i" -gt 30 ]; then
+                          echo "ERROR: no se pudo contactar al daemon DinD tras 60s."
+                          exit 1
+                        fi
+                        sleep 2
+                      done
+                      echo "Daemon de Docker disponible."
 
                       docker build \
                         --build-arg NEXT_PUBLIC_SUPABASE_URL="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_URL>" \

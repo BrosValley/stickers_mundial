@@ -112,7 +112,7 @@ export function ExchangeDetailClient({
           </span>
         </div>
 
-        {status === 'pending' && hasConflict && !done && (
+        {status === 'pending' && hasConflict && (
           <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 space-y-1">
             <p className="text-sm font-semibold text-red-300">
               {isOwner

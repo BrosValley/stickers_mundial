@@ -91,21 +91,33 @@ pipeline:
 
                       ssh -o StrictHostKeyChecking=no $HOST '
                         set -e
-                        # Instalar Docker si no está presente (igual que el guard de tar)
+                        # Instalar Docker/Podman si no hay CLI compatible.
+                        # (El servidor usa podman-docker; systemctl puede no
+                        # aplicar al ser podman sin daemon, de ahí el || true.)
                         if ! command -v docker >/dev/null 2>&1; then
                           echo "Docker no encontrado. Instalando con yum..."
                           sudo yum install -y docker
-                          sudo systemctl enable --now docker
+                          sudo systemctl enable --now docker 2>/dev/null || true
                         fi
 
                         # Cargar la nueva imagen
                         sudo docker load -i ~/stickers-image.tar.gz
 
-                        # Apagar el proceso PM2 anterior para liberar el puerto 3000
-                        pm2 delete next-app 2>/dev/null || true
+                        # Retirar el despliegue anterior basado en PM2
+                        pm2 kill 2>/dev/null || true
 
-                        # Reemplazar el contenedor en ejecución
+                        # Quitar el contenedor previo (si existe)
                         sudo docker rm -f stickers-mundial 2>/dev/null || true
+
+                        # Liberar el puerto 3000 por si quedó algún proceso colgado
+                        if command -v fuser >/dev/null 2>&1; then
+                          sudo fuser -k 3000/tcp 2>/dev/null || true
+                        elif command -v lsof >/dev/null 2>&1; then
+                          sudo lsof -ti tcp:3000 | xargs -r sudo kill -9 2>/dev/null || true
+                        fi
+                        sleep 2
+
+                        # Levantar el nuevo contenedor
                         sudo docker run -d \
                           --name stickers-mundial \
                           --restart unless-stopped \

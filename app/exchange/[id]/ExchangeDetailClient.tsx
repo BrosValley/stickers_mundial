@@ -73,10 +73,10 @@ export function ExchangeDetailClient({
   }
 
   const statusLabel: Record<ExchangeStatus, { text: string; color: string }> = {
-    pending:   { text: 'Pendiente',  color: 'text-amber-400 bg-amber-900/20 border-amber-500/30' },
-    accepted:  { text: 'Aceptado',   color: 'text-green-400 bg-green-900/20 border-green-500/30' },
-    rejected:  { text: 'Rechazado',  color: 'text-red-400 bg-red-900/20 border-red-500/30' },
-    cancelled: { text: 'Cancelado',  color: 'text-slate-400 bg-slate-900/20 border-slate-500/30' },
+    pending:   { text: 'Pendiente',  color: 'text-white bg-amber-500 border-amber-500' },
+    accepted:  { text: 'Aceptado',   color: 'text-white bg-green-600 border-green-600' },
+    rejected:  { text: 'Rechazado',  color: 'text-white bg-red-600 border-red-600' },
+    cancelled: { text: 'Cancelado',  color: 'text-white bg-slate-500 border-slate-500' },
   }
 
   const { text: statusText, color: statusColor } = statusLabel[status]
@@ -112,7 +112,7 @@ export function ExchangeDetailClient({
           </span>
         </div>
 
-        {status === 'pending' && hasConflict && !done && (
+        {status === 'pending' && hasConflict && (
           <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 space-y-1">
             <p className="text-sm font-semibold text-red-300">
               {isOwner
@@ -139,7 +139,7 @@ export function ExchangeDetailClient({
           stickers={ownerGives}
           grouped={groupByCountry(ownerGives)}
           countryMap={countryMap}
-          badgeColor="bg-green-900/50 text-green-300 border-green-500/30"
+          badgeColor="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-500/30"
           unavailableIds={unavailableOwnerSet}
           emptyMessage="Sin estampas seleccionadas."
         />
@@ -152,7 +152,7 @@ export function ExchangeDetailClient({
           stickers={requesterGives}
           grouped={groupByCountry(requesterGives)}
           countryMap={countryMap}
-          badgeColor="bg-amber-900/50 text-amber-300 border-amber-500/30"
+          badgeColor="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-500/30"
           unavailableIds={unavailableRequesterSet}
           emptyMessage="Sin estampas seleccionadas."
         />
@@ -239,8 +239,16 @@ function StickerBlock({
                           : badgeColor
                       }`}
                     >
-                      <span className="text-[10px] opacity-60">{s.code}</span>
-                      {s.name && <span className="font-sans text-[11px] font-semibold leading-tight">{s.name}</span>}
+                      {s.name
+                        ? <span className="font-sans text-[11px] font-semibold leading-tight">{s.name.split('|')[0]}</span>
+                        : <span className="text-[10px]">{s.code}</span>
+                      }
+                      {s.name && (() => {
+                        const parts = s.code.split('-')
+                        return parts.length >= 3
+                          ? <span className="font-mono text-[9px] opacity-60">{parts[parts.length - 1]}</span>
+                          : null
+                      })()}
                     </span>
                   )
                 })}

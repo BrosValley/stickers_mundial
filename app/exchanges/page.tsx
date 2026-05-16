@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getOwnerNickname } from '@/lib/profile.server'
@@ -46,10 +48,10 @@ export default async function ExchangesPage() {
   }
 
   const statusColor: Record<ExchangeStatus, string> = {
-    pending:   'text-amber-400 bg-amber-900/20 border-amber-500/30',
-    accepted:  'text-green-400 bg-green-900/20 border-green-500/30',
-    rejected:  'text-red-400 bg-red-900/20 border-red-500/30',
-    cancelled: 'text-slate-400 bg-slate-900/20 border-slate-500/30',
+    pending:   'text-white bg-amber-500 border-amber-500',
+    accepted:  'text-white bg-green-600 border-green-600',
+    rejected:  'text-white bg-red-600 border-red-600',
+    cancelled: 'text-white bg-slate-500 border-slate-500',
   }
 
   function ExchangeRow({ request }: { request: ExchangeRequest }) {
@@ -112,7 +114,7 @@ export default async function ExchangesPage() {
               <section className="space-y-3">
                 <h2 className="text-lg font-bold text-(--text)">
                   Pendientes
-                  <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black">{pending.length}</span>
+                  <span className="ml-2 inline-flex size-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white dark:bg-amber-400 dark:text-black">{pending.length}</span>
                 </h2>
                 {pending.map(r => <ExchangeRow key={r.id} request={r} />)}
               </section>

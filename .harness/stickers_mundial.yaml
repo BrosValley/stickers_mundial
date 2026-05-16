@@ -1,0 +1,134 @@
+pipeline:
+  projectIdentifier: default_project
+  orgIdentifier: default
+  identifier: stickers_mundial
+  name: stickers mundial
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: bvgithub
+        repoName: stickers_mundial
+        build: <+input>
+        sparseCheckout: []
+  # NEXT_PUBLIC_* values are baked into the image at build time (passed as
+  # --build-arg). Edit them here or override at run time.
+  variables:
+    - name: NEXT_PUBLIC_SUPABASE_URL
+      type: String
+      description: ""
+      required: false
+      value: https://kfecdzeyqpzeubatccpu.supabase.co
+    - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      type: String
+      description: ""
+      required: false
+      value: sb_publishable_psGX9jhpgTWknZWbihJe7g_jIyw_ijZ
+    - name: NEXT_PUBLIC_APP_URL
+      type: String
+      description: "Public URL the app is served from in prod"
+      required: false
+      value: http://192.168.0.132:3000
+  stages:
+    - stage:
+        name: Build_deploy
+        identifier: clone
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Docker
+            spec: {}
+          execution:
+            steps:
+              # Build the production image and export it as a tarball.
+              # DinD won't run on this delegate (it can't bind the busy
+              # /var/run/docker.sock). Instead we use the host Docker daemon
+              # directly: its socket is already mounted into the step container.
+              - step:
+                  type: Run
+                  name: Build Docker image
+                  identifier: build_image
+                  spec:
+                    image: docker:27
+                    shell: Sh
+                    envVariables:
+                      DOCKER_HOST: unix:///var/run/docker.sock
+                    command: |
+                      set -e
+                      docker version
+
+                      docker build \
+                        --build-arg NEXT_PUBLIC_SUPABASE_URL="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_URL>" \
+                        --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_ANON_KEY>" \
+                        --build-arg NEXT_PUBLIC_APP_URL="<+pipeline.variables.NEXT_PUBLIC_APP_URL>" \
+                        -t stickers-mundial:latest .
+
+                      # Escribir en el workspace compartido (CWD), no en /harness.
+                      docker save stickers-mundial:latest | gzip > stickers-image.tar.gz
+                      ls -lh stickers-image.tar.gz
+
+                      # No dejar la imagen en el daemon del delegate (solo etiqueta).
+                      docker image rm stickers-mundial:latest || true
+              # Ship the tarball to the server, load it and (re)start the container.
+              # No `image:` here on purpose: this reuses the default step image,
+              # which is where your existing SSH credentials already work.
+              - step:
+                  type: Run
+                  name: Deploy to server
+                  identifier: deploy
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      HOST="harness@192.168.0.132"
+
+                      scp -o StrictHostKeyChecking=no stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
+
+                      ssh -o StrictHostKeyChecking=no $HOST '
+                        set -e
+                        # Instalar Docker/Podman si no hay CLI compatible.
+                        # (El servidor usa podman-docker; systemctl puede no
+                        # aplicar al ser podman sin daemon, de ahí el || true.)
+                        if ! command -v docker >/dev/null 2>&1; then
+                          echo "Docker no encontrado. Instalando con yum..."
+                          sudo yum install -y docker
+                          sudo systemctl enable --now docker 2>/dev/null || true
+                        fi
+
+                        # Cargar la nueva imagen
+                        sudo docker load -i ~/stickers-image.tar.gz
+
+                        # Retirar el despliegue anterior basado en PM2
+                        pm2 kill 2>/dev/null || true
+
+                        # Quitar el contenedor previo (si existe)
+                        sudo docker rm -f stickers-mundial 2>/dev/null || true
+
+                        # Liberar el puerto 3000 por si quedó algún proceso colgado
+                        if command -v fuser >/dev/null 2>&1; then
+                          sudo fuser -k 3000/tcp 2>/dev/null || true
+                        elif command -v lsof >/dev/null 2>&1; then
+                          sudo lsof -ti tcp:3000 | xargs -r sudo kill -9 2>/dev/null || true
+                        fi
+                        sleep 2
+
+                        # Levantar el nuevo contenedor.
+                        # --network=host: el servidor (podman) no permite crear
+                        # un netns propio (ping_group_range / OCI permission
+                        # denied). Con host networking la app escucha directo
+                        # en el puerto 3000 del servidor.
+                        sudo docker run -d \
+                          --name stickers-mundial \
+                          --restart unless-stopped \
+                          --network=host \
+                          stickers-mundial:latest
+
+                        # Limpieza
+                        rm -f ~/stickers-image.tar.gz
+                        sudo docker image prune -f
+                      '

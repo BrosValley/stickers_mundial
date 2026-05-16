@@ -117,11 +117,15 @@ pipeline:
                         fi
                         sleep 2
 
-                        # Levantar el nuevo contenedor
+                        # Levantar el nuevo contenedor.
+                        # --network=host: el servidor (podman) no permite crear
+                        # un netns propio (ping_group_range / OCI permission
+                        # denied). Con host networking la app escucha directo
+                        # en el puerto 3000 del servidor.
                         sudo docker run -d \
                           --name stickers-mundial \
                           --restart unless-stopped \
-                          -p 3000:3000 \
+                          --network=host \
                           stickers-mundial:latest
 
                         # Limpieza

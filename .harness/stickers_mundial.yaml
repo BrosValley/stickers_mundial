@@ -45,23 +45,10 @@ pipeline:
             spec: {}
           execution:
             steps:
-              # Docker-in-Docker daemon: lets the build step run `docker build`.
-              - step:
-                  type: Background
-                  name: docker-dind
-                  identifier: docker_dind
-                  spec:
-                    image: docker:27-dind
-                    privileged: true
-                    envVariables:
-                      DOCKER_TLS_CERTDIR: ""
-                    # Listen ONLY on plain TCP. The default dind entrypoint also
-                    # binds /var/run/docker.sock, but that path is already taken
-                    # by the host socket mounted in -> "device or resource busy".
-                    entrypoint:
-                      - dockerd-entrypoint.sh
-                      - --host=tcp://0.0.0.0:2375
               # Build the production image and export it as a tarball.
+              # DinD won't run on this delegate (it can't bind the busy
+              # /var/run/docker.sock). Instead we use the host Docker daemon
+              # directly: its socket is already mounted into the step container.
               - step:
                   type: Run
                   name: Build Docker image
@@ -70,22 +57,10 @@ pipeline:
                     image: docker:27
                     shell: Sh
                     envVariables:
-                      # On Docker build infra each step is a separate container;
-                      # the DinD service is reached by the Background step id.
-                      DOCKER_HOST: tcp://docker_dind:2375
+                      DOCKER_HOST: unix:///var/run/docker.sock
                     command: |
                       set -e
-                      echo "Esperando al daemon de Docker (DOCKER_HOST=$DOCKER_HOST)..."
-                      i=0
-                      until docker info >/dev/null 2>&1; do
-                        i=$((i+1))
-                        if [ "$i" -gt 30 ]; then
-                          echo "ERROR: no se pudo contactar al daemon DinD tras 60s."
-                          exit 1
-                        fi
-                        sleep 2
-                      done
-                      echo "Daemon de Docker disponible."
+                      docker version
 
                       docker build \
                         --build-arg NEXT_PUBLIC_SUPABASE_URL="<+pipeline.variables.NEXT_PUBLIC_SUPABASE_URL>" \
@@ -93,8 +68,12 @@ pipeline:
                         --build-arg NEXT_PUBLIC_APP_URL="<+pipeline.variables.NEXT_PUBLIC_APP_URL>" \
                         -t stickers-mundial:latest .
 
-                      docker save stickers-mundial:latest | gzip > /harness/stickers-image.tar.gz
-                      ls -lh /harness/stickers-image.tar.gz
+                      # Escribir en el workspace compartido (CWD), no en /harness.
+                      docker save stickers-mundial:latest | gzip > stickers-image.tar.gz
+                      ls -lh stickers-image.tar.gz
+
+                      # No dejar la imagen en el daemon del delegate (solo etiqueta).
+                      docker image rm stickers-mundial:latest || true
               # Ship the tarball to the server, load it and (re)start the container.
               # No `image:` here on purpose: this reuses the default step image,
               # which is where your existing SSH credentials already work.
@@ -108,25 +87,37 @@ pipeline:
                       set -e
                       HOST="harness@192.168.0.132"
 
-                      scp -o StrictHostKeyChecking=no /harness/stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
+                      scp -o StrictHostKeyChecking=no stickers-image.tar.gz $HOST:~/stickers-image.tar.gz
 
                       ssh -o StrictHostKeyChecking=no $HOST '
                         set -e
-                        # Instalar Docker si no está presente (igual que el guard de tar)
+                        # Instalar Docker/Podman si no hay CLI compatible.
+                        # (El servidor usa podman-docker; systemctl puede no
+                        # aplicar al ser podman sin daemon, de ahí el || true.)
                         if ! command -v docker >/dev/null 2>&1; then
                           echo "Docker no encontrado. Instalando con yum..."
                           sudo yum install -y docker
-                          sudo systemctl enable --now docker
+                          sudo systemctl enable --now docker 2>/dev/null || true
                         fi
 
                         # Cargar la nueva imagen
                         sudo docker load -i ~/stickers-image.tar.gz
 
-                        # Apagar el proceso PM2 anterior para liberar el puerto 3000
-                        pm2 delete next-app 2>/dev/null || true
+                        # Retirar el despliegue anterior basado en PM2
+                        pm2 kill 2>/dev/null || true
 
-                        # Reemplazar el contenedor en ejecución
+                        # Quitar el contenedor previo (si existe)
                         sudo docker rm -f stickers-mundial 2>/dev/null || true
+
+                        # Liberar el puerto 3000 por si quedó algún proceso colgado
+                        if command -v fuser >/dev/null 2>&1; then
+                          sudo fuser -k 3000/tcp 2>/dev/null || true
+                        elif command -v lsof >/dev/null 2>&1; then
+                          sudo lsof -ti tcp:3000 | xargs -r sudo kill -9 2>/dev/null || true
+                        fi
+                        sleep 2
+
+                        # Levantar el nuevo contenedor
                         sudo docker run -d \
                           --name stickers-mundial \
                           --restart unless-stopped \

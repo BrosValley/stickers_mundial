@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { acceptExchange, rejectExchange, cancelExchange } from '@/app/actions/exchange'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import type { ExchangeStatus, StickerWithQuantity, Country } from '@/types/album'
+import type { ExchangeStatus, StickerWithQuantity, Country, Section } from '@/types/album'
 import Link from 'next/link'
 
 interface ExchangeDetailClientProps {
@@ -18,6 +18,7 @@ interface ExchangeDetailClientProps {
   unavailableOwnerGives: string[]
   unavailableRequesterGives: string[]
   countries: Country[]
+  sections: Section[]
   shareToken: string
 }
 
@@ -32,6 +33,7 @@ export function ExchangeDetailClient({
   unavailableOwnerGives,
   unavailableRequesterGives,
   countries,
+  sections,
   shareToken,
 }: ExchangeDetailClientProps) {
   const router = useRouter()
@@ -40,6 +42,7 @@ export function ExchangeDetailClient({
   const [error, setError] = useState<string | null>(null)
 
   const countryMap = new Map(countries.map(c => [c.id, c]))
+  const sectionMap = new Map(sections.map(s => [s.id, s]))
   const unavailableOwnerSet = new Set(unavailableOwnerGives)
   const unavailableRequesterSet = new Set(unavailableRequesterGives)
   const hasConflict = unavailableOwnerGives.length > 0 || unavailableRequesterGives.length > 0
@@ -47,7 +50,7 @@ export function ExchangeDetailClient({
   function groupByCountry(stickers: StickerWithQuantity[]) {
     const grouped = new Map<string, StickerWithQuantity[]>()
     for (const s of stickers) {
-      const key = s.country_id ?? 'other'
+      const key = s.country_id ?? s.section_id ?? 'other'
       const arr = grouped.get(key) ?? []
       arr.push(s)
       grouped.set(key, arr)
@@ -139,6 +142,7 @@ export function ExchangeDetailClient({
           stickers={ownerGives}
           grouped={groupByCountry(ownerGives)}
           countryMap={countryMap}
+          sectionMap={sectionMap}
           badgeColor="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-500/30"
           unavailableIds={unavailableOwnerSet}
           emptyMessage="Sin estampas seleccionadas."
@@ -152,6 +156,7 @@ export function ExchangeDetailClient({
           stickers={requesterGives}
           grouped={groupByCountry(requesterGives)}
           countryMap={countryMap}
+          sectionMap={sectionMap}
           badgeColor="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-500/30"
           unavailableIds={unavailableRequesterSet}
           emptyMessage="Sin estampas seleccionadas."
@@ -205,12 +210,13 @@ export function ExchangeDetailClient({
 }
 
 function StickerBlock({
-  title, stickers, grouped, countryMap, badgeColor, unavailableIds, emptyMessage,
+  title, stickers, grouped, countryMap, sectionMap, badgeColor, unavailableIds, emptyMessage,
 }: {
   title: string
   stickers: StickerWithQuantity[]
   grouped: Map<string, StickerWithQuantity[]>
   countryMap: Map<string, Country>
+  sectionMap: Map<string, Section>
   badgeColor: string
   unavailableIds: Set<string>
   emptyMessage: string
@@ -222,10 +228,9 @@ function StickerBlock({
         <p className="text-sm text-(--muted)">{emptyMessage}</p>
       ) : (
         Array.from(grouped.entries()).map(([countryId, items]) => {
-          const country = countryMap.get(countryId)
           return (
             <div key={countryId}>
-              <p className="text-sm font-medium text-(--text) mb-2">{country?.name ?? 'Sección especial'}</p>
+              <p className="text-sm font-medium text-(--text) mb-2">{countryMap.get(countryId)?.name ?? sectionMap.get(countryId)?.name ?? 'Otros'}</p>
               <div className="flex flex-wrap gap-2">
                 {items.map(s => {
                   const unavailable = unavailableIds.has(s.id)

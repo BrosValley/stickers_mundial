@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getCountries, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
+import { getCountries, getSections, getStickers, mergeStickersWithQuantity } from '@/lib/collections'
 import { getOwnerNickname } from '@/lib/profile.server'
 import { ExchangeDetailClient } from './ExchangeDetailClient'
 import type { ExchangeRequest, UserSticker } from '@/types/album'
@@ -31,8 +31,9 @@ export default async function ExchangePage({ params }: PageProps) {
   const isRequester = user.id === request.requester_id
   if (!isOwner && !isRequester) notFound()
 
-  const [countries, stickers, ownerNickname, requesterNickname] = await Promise.all([
+  const [countries, sections, stickers, ownerNickname, requesterNickname] = await Promise.all([
     getCountries(request.collection_id),
+    getSections(request.collection_id),
     getStickers(request.collection_id),
     getOwnerNickname(request.owner_id),
     getOwnerNickname(request.requester_id),
@@ -94,6 +95,7 @@ export default async function ExchangePage({ params }: PageProps) {
       unavailableOwnerGives={unavailableOwnerGives}
       unavailableRequesterGives={unavailableRequesterGives}
       countries={countries}
+      sections={sections}
       shareToken={request.share_token}
     />
   )
